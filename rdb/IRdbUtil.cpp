@@ -1,0 +1,512 @@
+﻿#include "IRdbUtil.h"
+#include "core/util/IConvertUtil.h"
+#include "rdb/exception/IRdbException.h"
+#include "rdb/IRdbAbort.h"
+#include "rdb/ISqlQuery.h"
+#include "rdb/entity/IRdbTableInfo.h"
+#include "rdb/entity/IRdbEntityInfo.h"
+
+$PackageWebCoreBegin
+
+namespace detail
+{
+    QStringList getFieldNames(const QSqlRecord& record)
+    {
+        QStringList ret;
+        for(auto index=0; index < record.count(); index++){
+            ret.append(record.fieldName(index));
+        }
+        return ret;
+    }
+
+    QVariant getSingleValue(ISqlQuery& query, bool& ok)
+    {
+        int count = 0;
+        QVariant ret{QVariant::Invalid};
+        while(query.next()){
+            if((count >= 1) || (query.record().count() != 1)){
+                ok = false;
+                return QVariant::Invalid;
+            }
+            if(query.record().count() != 1){
+                throw IRdbException("query column should be only one");
+            }
+            ret = query.value(0);
+            count ++;
+        }
+        if(count == 0){
+            ok = false;
+            return QVariant::Invalid;
+        }
+        ok = true;
+        return ret;
+    }
+
+    QVariantList getListValues(ISqlQuery& query)
+    {
+        QVariantList ret;
+
+        bool flag{false};
+        while(query.next()){
+            if(!flag){
+                if(query.record().count() != 1){
+                    throw IRdbException("query count should be only one");
+                }
+                flag = true;
+            }
+            ret.append(query.value(0));
+        }
+        return ret;
+    }
+
+    // TODO:
+    QVariantMap getOneVariantMap(ISqlQuery& query, bool& ok)
+    {
+        QVariantMap ret;
+        int count = 0;
+        while(query.next()){
+            if(count >= 1){
+                ok = false;
+                return ret;
+            }
+            auto record = query.record();
+            auto recordCount = record.count();
+            for(int i=0; i<recordCount; i++){
+                auto name = record.fieldName(i);
+                ret[name] = query.value(i);
+            }
+            count ++;
+        }
+        if(count == 0){
+            ok = false;
+            return ret;
+        }
+        return ret;
+    }
+
+    QList<QVariantMap> getVariantMapList(ISqlQuery& query)
+    {
+        QList<QVariantMap> ret;
+
+        bool flag{false};
+        QStringList names;
+        while(query.next()){
+            if(!flag){
+                names = ::detail::getFieldNames(query.record());
+                flag = true;
+            }
+
+            QVariantMap map;
+            for(const auto& name : names){
+                map[name] = query.value(name);
+            }
+            ret.append(map);
+        }
+        return ret;
+    }
+}
+
+bool IRdbUtil::isPrimaryKeyType(QMetaType::Type type)
+{
+    static const QList<QMetaType::Type> PrimaryKeyTypes = {
+        QMetaType::Int,
+        QMetaType::Long,
+        QMetaType::LongLong,
+        QMetaType::QString
+    };
+
+    return PrimaryKeyTypes.indexOf(type) != -1;
+}
+
+void IRdbUtil::detail::toBean(ISqlQuery &query, const IRdbTableInfo &info, void *ptr)
+{
+    auto names = ::detail::getFieldNames(query.record());
+    for(const auto& field : info.fields){
+        if(names.contains(field.name)){
+            IMetaUtil::writeProperty(field.property, ptr, query.value(field.name));
+        }
+    }
+}
+
+void IRdbUtil::detail::toBean(ISqlQuery &query, QList<const IRdbEntityInfo::Field*> fields, void* ptr)
+{
+    for(const auto& field : fields){
+        IMetaUtil::writeProperty(field->property, ptr, query.value(field->name));
+    }
+}
+
+int IRdbUtil::getInt(ISqlQuery &query, bool& ok)
+{
+    auto val = ::detail::getSingleValue(query, ok);
+    if(ok){
+        return val.toInt(&ok);
+    }
+    return {};
+}
+
+uint IRdbUtil::getUint(ISqlQuery &query, bool& ok)
+{
+    auto val = ::detail::getSingleValue(query, ok);
+    if(ok){
+        return val.toUInt(&ok);
+    }
+    return {};
+}
+
+qulonglong IRdbUtil::getULongLong(ISqlQuery &query, bool& ok)
+{
+    auto val = ::detail::getSingleValue(query, ok);
+    if(ok){
+        return val.toULongLong(&ok);
+    }
+    return {};
+}
+
+qlonglong IRdbUtil::getLongLong(ISqlQuery &query, bool& ok)
+{
+    auto val = ::detail::getSingleValue(query, ok);
+    if(ok){
+        return val.toLongLong(&ok);
+    }
+    return {};
+}
+
+float IRdbUtil::getFloat(ISqlQuery &query, bool& ok)
+{
+    auto val = ::detail::getSingleValue(query, ok);
+    if(ok){
+        return val.toFloat(&ok);
+    }
+    return {};
+}
+
+double IRdbUtil::getDouble(ISqlQuery &query, bool& ok)
+{
+    auto val = ::detail::getSingleValue(query, ok);
+    if(ok){
+        return val.toDouble(&ok);
+    }
+    return {};
+}
+
+bool IRdbUtil::getBool(ISqlQuery &query, bool& ok)
+{
+    auto val = ::detail::getSingleValue(query, ok);
+    if(ok){
+        return val.toBool();
+    }
+    return {};
+}
+
+QDate IRdbUtil::getDate(ISqlQuery &query, bool& ok)
+{
+    auto val = ::detail::getSingleValue(query, ok);
+    if(!ok){
+        return QDate();
+    }
+
+    switch (val.type()) {
+    case QVariant::Date:
+        return val.toDate();
+    case QVariant::DateTime:
+        return val.toDateTime().date();
+    case QVariant::String:
+        return IConvertUtil::toDate(val.toString(), ok);
+    case QVariant::Invalid:
+        return QDate();
+    default:
+        IRdbAbort::abortRdbUtilError("date convertion error", $ISourceLocation);
+    }
+    return QDate();
+}
+
+QTime IRdbUtil::getTime(ISqlQuery &query,  bool& ok)
+{
+    auto val = ::detail::getSingleValue(query, ok);
+    if(!ok){
+        return {};
+    }
+
+    switch (val.type()) {
+    case QVariant::Time:
+        return val.toTime();
+    case QVariant::DateTime:
+        return val.toDateTime().time();
+    case QVariant::String:
+        return IConvertUtil::toTime(val.toString(), ok);
+    case QVariant::Invalid:
+        return QTime();
+    default:
+        IRdbAbort::abortRdbUtilError("time convertion error", $ISourceLocation);
+    }
+    return QTime();
+}
+
+QDateTime IRdbUtil::getDateTime(ISqlQuery &query, bool& ok)
+{
+    auto val = ::detail::getSingleValue(query, ok);
+    if(!ok){
+        return {};
+    }
+    switch (val.type()) {
+    case QVariant::DateTime:
+        return val.toDateTime();
+    case QVariant::String:
+        return IConvertUtil::toDateTime(val.toString(), ok);
+    case QVariant::Invalid:
+        return QDateTime();
+    default:
+        IRdbAbort::abortRdbUtilError("DateTime convertion erorr", $ISourceLocation);
+    }
+    return QDateTime();
+}
+
+QString IRdbUtil::getString(ISqlQuery &query, bool& ok)
+{
+    auto val = ::detail::getSingleValue(query, ok);
+    if(ok){
+        return val.toString();
+    }
+    return {};
+}
+
+QVariant IRdbUtil::getVariant(ISqlQuery &query, bool& ok)
+{
+    return ::detail::getSingleValue(query, ok);
+}
+
+QVariantMap IRdbUtil::getMap(ISqlQuery &query, bool& ok)
+{
+    return ::detail::getOneVariantMap(query, ok);
+}
+
+QVariantList IRdbUtil::getVariantList(ISqlQuery &query)
+{
+    return ::detail::getListValues(query);
+}
+
+QList<int> IRdbUtil::getIntList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+
+    bool ok;
+    QList<int> ret;
+    for(const auto& val : result){
+        ret.append(val.toInt(&ok));
+        if(!ok){
+            throw IRdbException("convert failed");
+        }
+    }
+    return ret;
+}
+
+QList<uint> IRdbUtil::getUintList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+
+    bool ok;
+    QList<uint> ret;
+    for(const auto& val : result){
+        ret.append(val.toUInt(&ok));
+        if(!ok){
+            throw IRdbException("convert failed");
+        }
+    }
+    return ret;
+}
+
+QList<qulonglong> IRdbUtil::getULongLongList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+
+    bool ok;
+    QList<qulonglong> ret;
+    for(const auto& val : result){
+        ret.append(val.toULongLong(&ok));
+        if(!ok){
+            throw IRdbException("convert failed");
+        }
+    }
+    return ret;
+}
+
+QList<qlonglong> IRdbUtil::getLongLongList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+
+    bool ok;
+    QList<qlonglong> ret;
+    for(const auto& val : result){
+        ret.append(val.toLongLong(&ok));
+        if(!ok){
+            throw IRdbException("convert failed");
+        }
+    }
+    return ret;
+}
+
+QList<float> IRdbUtil::getFloatList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+
+    bool ok;
+    QList<float> ret;
+    for(const auto& val : result){
+        ret.append(val.toFloat(&ok));
+        if(!ok){
+            throw IRdbException("convert failed");
+        }
+    }
+    return ret;
+}
+
+QList<double> IRdbUtil::getDoubleList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+
+    bool ok;
+    QList<double> ret;
+    for(const auto& val : result){
+        ret.append(val.toDouble(&ok));
+        if(!ok){
+            throw IRdbException("convert failed");
+        }
+    }
+    return ret;
+}
+
+QList<bool> IRdbUtil::getBoolList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+
+    bool ok;
+    QList<bool> ret;
+    for(const auto& val : result){
+        auto value = val.toInt(&ok);
+        ret.append(value != 0);
+        if(!ok){
+            throw IRdbException("convert failed");
+        }
+    }
+    return ret;
+}
+
+QStringList IRdbUtil::getStringList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+
+    QStringList ret;
+    for(const auto& val : result){
+        ret.append(val.toString());
+    }
+    return ret;
+}
+
+QList<QDate> IRdbUtil::getDateList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+
+    bool ok;
+    QList<QDate> dates;
+    for(const QVariant& val : result){
+        switch (val.type()) {
+        case QVariant::Date:
+            dates.append(val.toDate());
+            break;
+        case QVariant::DateTime:
+            dates.append(val.toDateTime().date());
+            break;
+        case QVariant::String:
+            dates.append(IConvertUtil::toDate(val.toString(), ok));
+            if(!ok){
+                throw IRdbException("convert failed");
+            }
+            break;
+        case QVariant::Invalid:
+            dates.append(QDate());
+            break;
+        default:
+            IRdbAbort::abortRdbUtilError("currently other type of date not supported", $ISourceLocation);
+        }
+    }
+    return dates;
+}
+
+QList<QTime> IRdbUtil::getTimeList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+
+    bool ok;
+    QList<QTime> ret;
+    for(const QVariant& val : result){
+        switch (val.type()) {
+        case QVariant::DateTime:
+            ret.append(val.toDateTime().time());
+            break;
+        case QVariant::Time:
+            ret.append(val.toTime());
+            break;
+        case QVariant::String:
+            ret.append(IConvertUtil::toTime(val.toString(), ok));
+            if(!ok){
+                throw IRdbException("convert failed");
+            }
+            break;
+        case QVariant::Invalid:
+            ret.append(QTime());
+            break;
+        default:
+            IRdbAbort::abortRdbUtilError("currently other type of time not supported", $ISourceLocation);
+        }
+    }
+    return ret;
+}
+
+QList<QDateTime> IRdbUtil::getDateTimeList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+
+    bool ok;
+    QList<QDateTime> ret;
+    for(const QVariant& val : result){
+        switch (val.type()) {
+        case QVariant::DateTime:
+            ret.append(val.toDateTime());
+            break;
+        case QVariant::String:
+            ret.append(IConvertUtil::toDateTime(val.toString(), ok));
+            if(!ok){
+                throw IRdbException("convert failed");
+            }
+            break;
+        case QVariant::Invalid:
+            ret.append(QDateTime());
+            break;
+        default:
+            IRdbAbort::abortRdbUtilError("currently other type of DateTime not supported", $ISourceLocation);
+        }
+    }
+    return ret;
+}
+
+QList<QVariantMap> IRdbUtil::getVariantMapList(ISqlQuery &query)
+{
+    QList<QVariantMap> ret;
+
+    QStringList fieldNames;
+    bool flag{false};
+    while(query.next()){
+        if(!flag){
+            fieldNames = ::detail::getFieldNames(query.record());
+            flag = true;
+        }
+        QVariantMap map;
+        for(const auto& field : fieldNames){
+            map[field] = query.value(field);
+        }
+        ret.append(map);
+    }
+    return ret;
+}
+
+$PackageWebCoreEnd

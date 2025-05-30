@@ -1,0 +1,189 @@
+﻿#pragma once
+
+#include "core/util/IHeaderUtil.h"
+#include "core/base/IResult.h"
+#include "rdb/ISqlQuery.h"
+#include "rdb/IRdbUtil.h"
+#include "rdb/dialect/IRdbDialectWare.h"
+#include "rdb/clause/IRdbCondition.h"
+#include "rdb/database/IRdbDatabaseWare.h"
+#include "rdb/exception/IRdbException.h"
+#include "rdb/entity/IRdbEntityInfo.h"
+
+$PackageWebCoreBegin
+
+template<typename Entity, typename Db>
+class IRdbEntityModelWare
+{
+public:
+    using DbType = Db;
+
+public:
+    IRdbEntityModelWare();
+
+public:
+    std::size_t count();
+    std::size_t count(const IRdbCondition&);
+
+public:
+    IResult<Entity> findOne(const IRdbCondition&);
+    QList<Entity> findAll();
+    QList<Entity> findAll(const IRdbCondition&);
+    QVariantList findColumn(const QString& column);
+    QVariantList findColumn(const QString& column, const IRdbCondition& condition);
+    QList<QVariantMap> findColumns(const QStringList& columns);
+    QList<QVariantMap> findColumns(const QStringList& columns, const IRdbCondition& condition);
+
+public:
+    bool exist(const IRdbCondition& condition);
+
+public:
+    ISqlQuery createQuery();
+    ISqlQuery createQuery(const QString& sql);
+    ISqlQuery createQuery(const QString& sql, const QVariantMap& values);
+
+protected:
+    IRdbDatabaseWare& m_database;
+    const IRdbEntityInfo& m_entityInfo;
+    const IRdbDialectWare& m_dialect;
+};
+
+template<typename Entity, typename Db>
+IRdbEntityModelWare<Entity, Db>::IRdbEntityModelWare()
+    : m_database(Db::instance()), m_entityInfo(Entity::staticEntityInfo()), m_dialect(Db::DialectType::instance())
+{
+}
+
+template<typename Entity, typename Db>
+std::size_t IRdbEntityModelWare<Entity, Db>::count()
+{
+    auto query = createQuery(m_dialect.countSql(m_entityInfo));
+    query.exec();
+    bool ok = true;
+    auto value = IRdbUtil::getLongLong(query, ok);
+    return ok ? value : 0;
+}
+
+template<typename Entity, typename Db>
+std::size_t IRdbEntityModelWare<Entity, Db>::count(const IRdbCondition & condition)
+{
+    auto query = createQuery(m_dialect.countSql(m_entityInfo, condition));
+    condition.bindParameters(query);
+    query.exec();
+    bool ok = true;
+    auto value = IRdbUtil::getLongLong(query, ok);
+    return ok ? value : 0;
+}
+
+template<typename Entity, typename Db>
+IResult<Entity> IRdbEntityModelWare<Entity, Db>::findOne(const IRdbCondition& condition)
+{
+    auto sql =m_dialect.findOneSql(m_entityInfo, condition);
+    auto query = createQuery(sql);
+    condition.bindParameters(query);
+    if(!query.exec()){
+        if(query.lastError().type() != QSqlError::NoError){
+            throw IRdbException(query.lastError());
+        }
+        return std::nullopt;
+    }
+    return IRdbUtil::getBean<Entity>(query);
+}
+
+template<typename Entity, typename Db>
+QList<Entity> IRdbEntityModelWare<Entity, Db>::findAll()
+{
+    auto query = createQuery(m_dialect.findAllSql(m_entityInfo));
+    query.exec();
+    return IRdbUtil::getBeans<Entity>(query);
+}
+
+template<typename Entity, typename Db>
+QList<Entity> IRdbEntityModelWare<Entity, Db>::findAll(const IRdbCondition& condition)
+{
+    auto query = createQuery(m_dialect.findAllSql(m_entityInfo, condition));
+    condition.bindParameters(query);
+    query.exec();
+    return IRdbUtil::getBeans<Entity>(query);
+}
+
+template<typename Entity, typename Db>
+QVariantList IRdbEntityModelWare<Entity, Db>::findColumn(const QString& column)
+{
+    auto query = createQuery(m_dialect.findColumnSql(m_entityInfo, {column}));
+    if(!query.exec()){
+        return {};
+    }
+    return IRdbUtil::getVariantList(query);
+}
+
+template<typename Entity, typename Db>
+QVariantList IRdbEntityModelWare<Entity, Db>::findColumn(const QString &column, const IRdbCondition &condition)
+{
+    auto query = createQuery(m_dialect.findColumnSql(m_entityInfo, {column}, condition));
+    if(!query.exec()){
+        return {};
+    }
+    return IRdbUtil::getVariantList(query);
+}
+
+template<typename Entity, typename Db>
+QList<QVariantMap> IRdbEntityModelWare<Entity, Db>::findColumns(const QStringList& columns)
+{
+    auto query = createQuery(m_dialect.findColumnSql(m_entityInfo, columns));
+    if(!query.exec()){
+        return {};
+    }
+    return IRdbUtil::getVariantMapList(query);
+}
+
+template<typename Entity, typename Db>
+QList<QVariantMap> IRdbEntityModelWare<Entity, Db>::findColumns(const QStringList& columns, const IRdbCondition& condition)
+{
+    auto query = createQuery(m_dialect.findColumnSql(m_entityInfo, columns, condition));
+    condition.bindParameters(query);
+    if(!query.exec()){
+        return {};
+    }
+    return IRdbUtil::getVariantMapList(query);
+}
+
+template<typename Entity, typename Db>
+bool IRdbEntityModelWare<Entity, Db>::exist(const IRdbCondition &condition)
+{
+    auto query = createQuery(m_dialect.existSql(m_entityInfo, condition));
+    condition.bindParameters(query);
+    if(!query.exec()){
+        return false;
+    }
+    auto value = IRdbUtil::getBool(query);
+    if(value){
+        return *value;
+    }
+    return false;
+}
+
+template<typename Entity, typename Db>
+ISqlQuery IRdbEntityModelWare<Entity, Db>::createQuery()
+{
+    return m_database.createQuery();
+}
+
+template<typename Entity, typename Db>
+ISqlQuery IRdbEntityModelWare<Entity, Db>::createQuery(const QString &sql)
+{
+    auto query = m_database.createQuery();
+    query.prepare(sql);
+    return query;
+}
+
+template<typename Entity, typename Db>
+ISqlQuery IRdbEntityModelWare<Entity, Db>::createQuery(const QString& sql, const QVariantMap& values)
+{
+    auto query = m_database.createQuery();
+    query.prepare(sql);
+    query.bindParameters(values);
+    return query;
+}
+
+$PackageWebCoreEnd
