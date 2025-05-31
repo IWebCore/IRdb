@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "core/util/IHeaderUtil.h"
+#include "core/base/IHandle.h"
 #include "rdb/database/IRdbDataSource.h"
 #include "rdb/database/IRdbConnectionTrait.h"
 #include "rdb/dialect/IRdbDialectWare.h"
@@ -51,7 +52,7 @@ public:
 public:
     IRdbDataSource m_dataSource;
     IRdbConnectionTrait m_connectionTrait;
-    std::ptrdiff_t m_timerId{};
+    IHandle m_timerId{};
 };
 
 $PackageWebCoreEnd
