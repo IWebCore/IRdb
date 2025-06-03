@@ -20,7 +20,7 @@ IRdbDatabaseWare::~IRdbDatabaseWare()
     }
 
     std::lock_guard lock(m_connectionMutex);
-    if(m_connections.size() != m_connectionCount){  // NOTE: 有的资源释放出去了，没有回收，怎么办
+    if(static_cast<int>(m_connections.size()) != m_connectionCount){  // NOTE: 有的资源释放出去了，没有回收，怎么办
         qWarning() << "NOT ALL Database released";
     }
     while(!m_connections.empty()){
@@ -138,7 +138,7 @@ void IRdbDatabaseWare::timerTask()
         return; // 创建 connection
     }
 
-    for(auto index=m_connections.size() -1; index > m_connectionTrait.minConnection; index--){
+    for(int index=m_connections.size() -1; index > m_connectionTrait.minConnection; index--){
         auto connection = *(std::next(m_connections.begin(), index));
         if(connection->isExpired(m_connectionTrait.idleTimeout)){
             m_connections.remove(connection);

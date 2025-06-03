@@ -47,12 +47,12 @@ IRdbCondition::IRdbCondition(IRdbOrderByClause&& orderBy) : m_impl(new IRdbCondi
     m_impl->m_orderBys.push_back(std::move(orderBy));
 }
 
-IRdbCondition::IRdbCondition(IRdbGroupByClause &&groupBy)
+IRdbCondition::IRdbCondition(IRdbGroupByClause &&groupBy) : m_impl(new IRdbConditionImpl)
 {
     m_impl->m_groupBys.push_back(std::move(groupBy));
 }
 
-IRdbCondition::IRdbCondition(IRdbLimitClause &&limit)
+IRdbCondition::IRdbCondition(IRdbLimitClause &&limit) : m_impl(new IRdbConditionImpl)
 {
     m_impl->m_limit = std::move(limit);
 }

@@ -46,7 +46,7 @@ public:
     const IRdbDialectWare& m_dialect;
     std::list<IRdbConnection*> m_connections;
     std::mutex m_connectionMutex;
-    std::atomic<std::size_t> m_connectionCount{};
+    std::atomic<int> m_connectionCount{};
     std::condition_variable m_connectionCv;
 
 public:

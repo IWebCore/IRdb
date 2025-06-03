@@ -254,7 +254,7 @@ QString IRdbDialectWare::toWhereSql(const IRdbCondition &condition) const
         return {};
     }
     bool isAnd = true;
-    for(int i=0; i<count; i++){
+    for(std::size_t i=0; i<count; i++){
         QString where;
         if(condition.m_impl->m_wheres.count(i)){
             const auto& arg = condition.m_impl->m_wheres[i];
@@ -475,7 +475,9 @@ QString IRdbDialectWare::createSqlCommonKeyClause(const IRdbTableInfo &info, int
 
 void IRdbDialectWare::bindParameter(QSqlQuery &query, const QString &field, const QVariant &value) const
 {
-    if(value.type() >= QMetaType::User && (value.typeName() == std::string("std::string") || value.typeName() == std::string("IString"))){
+    if((static_cast<int>(value.type()) >= static_cast<int>(QMetaType::User))
+            && ((value.typeName() == std::string("std::string"))
+                || (value.typeName() == std::string("IString")))){
         return query.bindValue(field, value.value<QString>());
     }
     query.bindValue(field, value);
