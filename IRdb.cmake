@@ -1,6 +1,6 @@
-cacheToIncludes(${CMAKE_CURRENT_LIST_DIR})
+loadToIncludes(${CMAKE_CURRENT_LIST_DIR})
 
-cacheToSources(
+loadToSources(
     ${CMAKE_CURRENT_LIST_DIR}/rdb/IRdbCatagory.cpp 
     ${CMAKE_CURRENT_LIST_DIR}/rdb/IRdbManage.cpp 
     ${CMAKE_CURRENT_LIST_DIR}/rdb/IRdbUtil.cpp 

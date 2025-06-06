@@ -1,9 +1,11 @@
 {
     
     "name":"IRdb",
-    "group":"IWebCore",
     "version":"1.0.0",
     "author": "yuekeyuan",
     "summary":"relational database operation library",
-    "dependencies": {}
+    "license":"AGPL-3.0-only",
+    "dependencies": {
+        "ICore": "*"
+    }
 }

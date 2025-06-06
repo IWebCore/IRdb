@@ -62,17 +62,16 @@ public:
 private:
     bool containsTable(const QString& tableName);
 
+protected: // only self use and son use
+    const IRdbTableInfo& tableInfo() const;
+
 protected:
     virtual double $order() const override;
     virtual void $task() final;
-
-protected:
-    const IRdbTableInfo& m_tableInfo;
 };
 
 template<typename T, typename Table, typename Db, bool enabled>
 IRdbTableModelInterface<T, Table, Db, enabled>::IRdbTableModelInterface()
-    : /*IRdbEntityModelWare<Table, Db>(),*/ m_tableInfo(Table::staticEntityInfo())
 {
 }
 
@@ -88,12 +87,12 @@ template<typename T, typename Table, typename Db, bool enabled>
 int IRdbTableModelInterface<T, Table, Db, enabled>::insertOne(Table &table)
 {
     ISqlQuery query = this->createQuery();
-    this->m_dialect.insert(query, m_tableInfo, &table);
+    this->m_dialect.insert(query, tableInfo(), &table);
     query.exec();
 
-    const auto& maker = m_tableInfo.valueMakers[m_tableInfo.primaryKey];
+    const auto& maker = tableInfo().valueMakers[tableInfo().primaryKey];
     if(maker.type == IRdbTableInfo::ValueMakerType::InsertValue){
-        IMetaUtil::writeProperty(m_tableInfo.fields[m_tableInfo.primaryKey].property, &table, query.lastInsertId());
+        IMetaUtil::writeProperty(tableInfo().fields[tableInfo().primaryKey].property, &table, query.lastInsertId());
     }
     return query.numRowsAffected();
 }
@@ -102,7 +101,7 @@ template<typename T, typename Table, typename Db, bool enabled>
 int IRdbTableModelInterface<T, Table, Db, enabled>::insertOne(const Table& table)
 {
     ISqlQuery query = this->createQuery();
-    this->m_dialect.insert(query, m_tableInfo, &table);
+    this->m_dialect.insert(query, tableInfo(), &table);
     query.exec();
     return query.numRowsAffected();
 }
@@ -116,7 +115,7 @@ int IRdbTableModelInterface<T, Table, Db, enabled>::insertAll(const QList<Table>
     }
 
     ISqlQuery query = this->createQuery();
-    this->m_dialect.insertAll(query, m_tableInfo, ptrs);
+    this->m_dialect.insertAll(query, tableInfo(), ptrs);
     query.exec();
     return query.numRowsAffected();
 }
@@ -124,21 +123,21 @@ int IRdbTableModelInterface<T, Table, Db, enabled>::insertAll(const QList<Table>
 template<typename T, typename Table, typename Db, bool enabled>
 bool IRdbTableModelInterface<T, Table, Db, enabled>::existById(const QVariant &id)
 {
-    auto name = m_tableInfo.fields[m_tableInfo.primaryKey].name;
+    auto name = tableInfo().fields[tableInfo().primaryKey].name;
     return this->exist(IRdb::whereEqual(name, id));
 }
 
 template<typename T, typename Table, typename Db, bool enabled>
 IResult<Table> IRdbTableModelInterface<T, Table, Db, enabled>::findById(const QVariant& id)
 {
-    auto name = m_tableInfo.fields[m_tableInfo.primaryKey].name;
+    auto name = tableInfo().fields[tableInfo().primaryKey].name;
     return this->findOne(IRdb::whereEqual(name, id));
 }
 
 template<typename T, typename Table, typename Db, bool enabled>
 QList<Table> IRdbTableModelInterface<T, Table, Db, enabled>::findAllByIds(const QVariantList& list)
 {
-    auto name = m_tableInfo.fields[m_tableInfo.primaryKey].name;
+    auto name = tableInfo().fields[tableInfo().primaryKey].name;
     return this->findAll(IRdb::whereIn(name, list));
 }
 
@@ -153,14 +152,14 @@ int IRdbTableModelInterface<T, Table, Db, enabled>::update(const QString& sql, c
 template<typename T, typename Table, typename Db, bool enabled>
 int IRdbTableModelInterface<T, Table, Db, enabled>::updateOne(const Table& table)
 {
-    return updateOne(table, m_tableInfo.fieldNames);
+    return updateOne(table, tableInfo().fieldNames);
 }
 
 template<typename T, typename Table, typename Db, bool enabled>
 int IRdbTableModelInterface<T, Table, Db, enabled>::updateOne(const Table &table, const QStringList &columns)
 {
-    auto query = this->createQuery(this->m_dialect.updateOne(m_tableInfo, columns));
-    for(const auto& field : m_tableInfo.fields){
+    auto query = this->createQuery(this->m_dialect.updateOne(tableInfo(), columns));
+    for(const auto& field : tableInfo().fields){
         query.bindParameter(":" + field.name, IMetaUtil::readProperty(field.property, &table));
     }
     query.exec();
@@ -190,7 +189,7 @@ int IRdbTableModelInterface<T, Table, Db, enabled>::updateAll(const QList<Table>
 template<typename T, typename Table, typename Db, bool enabled>
 int IRdbTableModelInterface<T, Table, Db, enabled>::updateWhere(const QVariantMap &map, const IRdbCondition &condition)
 {
-    auto query = this->createQuery(this->m_dialect.updateWhere(m_tableInfo, map, condition));
+    auto query = this->createQuery(this->m_dialect.updateWhere(tableInfo(), map, condition));
     condition.bindParameters(query);
     QStringList keys = map.keys();
     for(const auto& key : keys){
@@ -203,7 +202,7 @@ int IRdbTableModelInterface<T, Table, Db, enabled>::updateWhere(const QVariantMa
 template<typename T, typename Table, typename Db, bool enabled>
 int IRdbTableModelInterface<T, Table, Db, enabled>::updateById(const QVariant &id, const QVariantMap &map)
 {
-    auto condition = IRdb::whereEqual(m_tableInfo.fields[m_tableInfo.primaryKey].name, id);
+    auto condition = IRdb::whereEqual(tableInfo().fields[tableInfo().primaryKey].name, id);
     return updateWhere(map, condition);
 }
 
@@ -217,7 +216,7 @@ int IRdbTableModelInterface<T, Table, Db, enabled>::deleted(const QString& sql, 
 template<typename T, typename Table, typename Db, bool enabled>
 int IRdbTableModelInterface<T, Table, Db, enabled>::deleteOne(const Table& table)
 {
-    const auto& field = m_tableInfo.fields[m_tableInfo.primaryKey];
+    const auto& field = tableInfo().fields[tableInfo().primaryKey];
     auto value = IMetaUtil::readProperty(field.property, &table);
     return deleteById(value);
 }
@@ -225,7 +224,7 @@ int IRdbTableModelInterface<T, Table, Db, enabled>::deleteOne(const Table& table
 template<typename T, typename Table, typename Db, bool enabled>
 int IRdbTableModelInterface<T, Table, Db, enabled>::deleteAll()
 {
-    auto query = this->createQuery(this->m_dialect.deleteTableSql(m_tableInfo));
+    auto query = this->createQuery(this->m_dialect.deleteTableSql(tableInfo()));
     query.exec();
     return query.numRowsAffected();
 }
@@ -234,7 +233,7 @@ template<typename T, typename Table, typename Db, bool enabled>
 int IRdbTableModelInterface<T, Table, Db, enabled>::deleteAll(const QList<Table>& tables)
 {
     QVariantList list;
-    const QMetaProperty& property = m_tableInfo.fields[m_tableInfo.primaryKey].property;
+    const QMetaProperty& property = tableInfo().fields[tableInfo().primaryKey].property;
     for(const auto& table : tables){
         list.append(IMetaUtil::readProperty(property, &table));
     }
@@ -245,7 +244,7 @@ int IRdbTableModelInterface<T, Table, Db, enabled>::deleteAll(const QList<Table>
 template<typename T, typename Table, typename Db, bool enabled>
 int IRdbTableModelInterface<T, Table, Db, enabled>::deleteAll(const IRdbCondition& condition)
 {
-    auto query = this->createQuery(this->m_dialect.deleteTableSql(m_tableInfo, condition));
+    auto query = this->createQuery(this->m_dialect.deleteTableSql(tableInfo(), condition));
     condition.bindParameters(query);
     query.exec();
     return query.numRowsAffected();
@@ -254,14 +253,14 @@ int IRdbTableModelInterface<T, Table, Db, enabled>::deleteAll(const IRdbConditio
 template<typename T, typename Table, typename Db, bool enabled>
 int IRdbTableModelInterface<T, Table, Db, enabled>::deleteById(const QVariant& id)
 {
-    auto name = m_tableInfo.fields[m_tableInfo.primaryKey].name;
+    auto name = tableInfo().fields[tableInfo().primaryKey].name;
     return deleteAll(IRdb::whereEqual(name, id));
 }
 
 template<typename T, typename Table, typename Db, bool enabled>
 int IRdbTableModelInterface<T, Table, Db, enabled>::deleteAllByIds(const QVariantList& ids)
 {
-    auto name = m_tableInfo.fields[m_tableInfo.primaryKey].name;
+    auto name = tableInfo().fields[tableInfo().primaryKey].name;
     return deleteAll(IRdb::whereIn(name, ids));
 }
 
@@ -276,7 +275,7 @@ void IRdbTableModelInterface<T, Table, Db, enabled>::createTable()
 {
     auto sql = createTableSql();
     if(sql.isEmpty()){
-        sql = this->m_dialect.createTableSql(m_tableInfo);
+        sql = this->m_dialect.createTableSql(tableInfo());
     }
     if(sql.isEmpty()){
         IRdbAbort::abortEntityCannotBeCreated("no create table sql clause exist, please add createTableSql", $ISourceLocation);
@@ -294,7 +293,7 @@ void IRdbTableModelInterface<T, Table, Db, enabled>::clearTable()
 template<typename T, typename Table, typename Db, bool enabled>
 void IRdbTableModelInterface<T, Table, Db, enabled>::truncateTable()
 {
-    auto query = this->createQuery(this->m_dialect.truncateTableSql(m_tableInfo));
+    auto query = this->createQuery(this->m_dialect.truncateTableSql(tableInfo()));
     query.exec();
 }
 
@@ -311,6 +310,12 @@ bool IRdbTableModelInterface<T, Table, Db, enabled>::containsTable(const QString
 }
 
 template<typename T, typename Table, typename Db, bool enabled>
+inline const IRdbTableInfo &IRdbTableModelInterface<T, Table, Db, enabled>::tableInfo() const
+{
+    return Table::staticEntityInfo();
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
 double IRdbTableModelInterface<T, Table, Db, enabled>::$order() const
 {
     return 50;
@@ -320,9 +325,9 @@ template<typename T, typename Table, typename Db, bool enabled>
 void IRdbTableModelInterface<T, Table, Db, enabled>::$task()
 {
     if /*constexpr*/ (enabled){
-        QString name = m_tableInfo.entityName;
+        QString name = tableInfo().entityName;
         if(containsTable(name)){
-            Db::instance().dropTable(m_tableInfo);
+            Db::instance().dropTable(tableInfo());
 //            qDebug().noquote() << QString::fromStdString(m_database.getClassName()) << "EXIST TABLE: " << name;
 //            return;
         }

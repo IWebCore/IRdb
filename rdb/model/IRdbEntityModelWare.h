@@ -43,21 +43,23 @@ public:
     ISqlQuery createQuery(const QString& sql, const QVariantMap& values);
 
 protected:
+    const IRdbEntityInfo& entityInfo() const;
+
+protected:
     IRdbDatabaseWare& m_database;
-    const IRdbEntityInfo& m_entityInfo;
     const IRdbDialectWare& m_dialect;
 };
 
 template<typename Entity, typename Db>
 IRdbEntityModelWare<Entity, Db>::IRdbEntityModelWare()
-    : m_database(Db::instance()), m_entityInfo(Entity::staticEntityInfo()), m_dialect(Db::DialectType::instance())
+    : m_database(Db::instance()), m_dialect(Db::DialectType::instance())
 {
 }
 
 template<typename Entity, typename Db>
 std::size_t IRdbEntityModelWare<Entity, Db>::count()
 {
-    auto query = createQuery(m_dialect.countSql(m_entityInfo));
+    auto query = createQuery(m_dialect.countSql(entityInfo()));
     query.exec();
     bool ok = true;
     auto value = IRdbUtil::getLongLong(query, ok);
@@ -67,7 +69,7 @@ std::size_t IRdbEntityModelWare<Entity, Db>::count()
 template<typename Entity, typename Db>
 std::size_t IRdbEntityModelWare<Entity, Db>::count(const IRdbCondition & condition)
 {
-    auto query = createQuery(m_dialect.countSql(m_entityInfo, condition));
+    auto query = createQuery(m_dialect.countSql(entityInfo(), condition));
     condition.bindParameters(query);
     query.exec();
     bool ok = true;
@@ -78,7 +80,7 @@ std::size_t IRdbEntityModelWare<Entity, Db>::count(const IRdbCondition & conditi
 template<typename Entity, typename Db>
 IResult<Entity> IRdbEntityModelWare<Entity, Db>::findOne(const IRdbCondition& condition)
 {
-    auto sql =m_dialect.findOneSql(m_entityInfo, condition);
+    auto sql =m_dialect.findOneSql(entityInfo(), condition);
     auto query = createQuery(sql);
     condition.bindParameters(query);
     if(!query.exec()){
@@ -93,7 +95,7 @@ IResult<Entity> IRdbEntityModelWare<Entity, Db>::findOne(const IRdbCondition& co
 template<typename Entity, typename Db>
 QList<Entity> IRdbEntityModelWare<Entity, Db>::findAll()
 {
-    auto query = createQuery(m_dialect.findAllSql(m_entityInfo));
+    auto query = createQuery(m_dialect.findAllSql(entityInfo()));
     query.exec();
     return IRdbUtil::getBeans<Entity>(query);
 }
@@ -101,7 +103,7 @@ QList<Entity> IRdbEntityModelWare<Entity, Db>::findAll()
 template<typename Entity, typename Db>
 QList<Entity> IRdbEntityModelWare<Entity, Db>::findAll(const IRdbCondition& condition)
 {
-    auto query = createQuery(m_dialect.findAllSql(m_entityInfo, condition));
+    auto query = createQuery(m_dialect.findAllSql(entityInfo(), condition));
     condition.bindParameters(query);
     query.exec();
     return IRdbUtil::getBeans<Entity>(query);
@@ -110,7 +112,7 @@ QList<Entity> IRdbEntityModelWare<Entity, Db>::findAll(const IRdbCondition& cond
 template<typename Entity, typename Db>
 QVariantList IRdbEntityModelWare<Entity, Db>::findColumn(const QString& column)
 {
-    auto query = createQuery(m_dialect.findColumnSql(m_entityInfo, {column}));
+    auto query = createQuery(m_dialect.findColumnSql(entityInfo(), {column}));
     if(!query.exec()){
         return {};
     }
@@ -120,7 +122,7 @@ QVariantList IRdbEntityModelWare<Entity, Db>::findColumn(const QString& column)
 template<typename Entity, typename Db>
 QVariantList IRdbEntityModelWare<Entity, Db>::findColumn(const QString &column, const IRdbCondition &condition)
 {
-    auto query = createQuery(m_dialect.findColumnSql(m_entityInfo, {column}, condition));
+    auto query = createQuery(m_dialect.findColumnSql(entityInfo(), {column}, condition));
     if(!query.exec()){
         return {};
     }
@@ -130,7 +132,7 @@ QVariantList IRdbEntityModelWare<Entity, Db>::findColumn(const QString &column, 
 template<typename Entity, typename Db>
 QList<QVariantMap> IRdbEntityModelWare<Entity, Db>::findColumns(const QStringList& columns)
 {
-    auto query = createQuery(m_dialect.findColumnSql(m_entityInfo, columns));
+    auto query = createQuery(m_dialect.findColumnSql(entityInfo(), columns));
     if(!query.exec()){
         return {};
     }
@@ -140,7 +142,7 @@ QList<QVariantMap> IRdbEntityModelWare<Entity, Db>::findColumns(const QStringLis
 template<typename Entity, typename Db>
 QList<QVariantMap> IRdbEntityModelWare<Entity, Db>::findColumns(const QStringList& columns, const IRdbCondition& condition)
 {
-    auto query = createQuery(m_dialect.findColumnSql(m_entityInfo, columns, condition));
+    auto query = createQuery(m_dialect.findColumnSql(entityInfo(), columns, condition));
     condition.bindParameters(query);
     if(!query.exec()){
         return {};
@@ -151,7 +153,7 @@ QList<QVariantMap> IRdbEntityModelWare<Entity, Db>::findColumns(const QStringLis
 template<typename Entity, typename Db>
 bool IRdbEntityModelWare<Entity, Db>::exist(const IRdbCondition &condition)
 {
-    auto query = createQuery(m_dialect.existSql(m_entityInfo, condition));
+    auto query = createQuery(m_dialect.existSql(entityInfo(), condition));
     condition.bindParameters(query);
     if(!query.exec()){
         return false;
@@ -184,6 +186,12 @@ ISqlQuery IRdbEntityModelWare<Entity, Db>::createQuery(const QString& sql, const
     query.prepare(sql);
     query.bindParameters(values);
     return query;
+}
+
+template<typename Entity, typename Db>
+inline const IRdbEntityInfo &IRdbEntityModelWare<Entity, Db>::entityInfo() const
+{
+    return Entity::staticEntityInfo();
 }
 
 $PackageWebCoreEnd
