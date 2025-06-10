@@ -11,7 +11,7 @@ QString IRdbSqliteDialect::databaseType() const
 
 QString IRdbSqliteDialect::dropTableSql(const IRdbTableInfo &info) const
 {
-    return "DROP TABLE IF EXISTS " + quoteName(info.entityName);
+    return "DROP TABLE IF EXISTS " + quoteName(info.m_entityName);
 }
 
 QString IRdbSqliteDialect::getSqlType(const IRdbTableInfo& info, int index) const
@@ -37,11 +37,11 @@ QString IRdbSqliteDialect::getSqlType(const IRdbTableInfo& info, int index) cons
         {qMetaTypeId<std::string>(), "VARCHAR"},
         {qMetaTypeId<IString>(), "VARCHAR"},
     };
-    if(info.sqlType.contains(index)){
-        return info.sqlType[index];
+    if(info.m_sqlType.contains(index)){
+        return info.m_sqlType[index];
     }
 
-    auto typeId = info.fields[index].typeId;
+    auto typeId = info.m_fields[index].m_typeId;
     if(!map.contains(typeId)){
         QString tip = QString("Type is not supported. Type:").append(QVariant::typeToName(typeId));
         IRdbAbort::abortDialectError(tip, $ISourceLocation);

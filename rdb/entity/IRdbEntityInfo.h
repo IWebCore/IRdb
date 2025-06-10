@@ -9,11 +9,10 @@ class IRdbEntityInfo
 public:
     struct Field
     {
-        int index{};
-        QString name;
-        QString typeName;
-        QMetaType::Type typeId;
-        QMetaProperty property;
+        QString m_name;
+        QString m_typeName;
+        QMetaType::Type m_typeId;
+        QMetaProperty m_property;
     };
 
 public:
@@ -23,11 +22,11 @@ public:
     const QMetaObject& m_metaObject;
 
 public:
-    QString className;
-    QString entityName;
+    QString m_className;
+    QString m_entityName;
 
-    QList<Field> fields;
-    QStringList fieldNames;
+    QList<Field> m_fields;
+    QStringList m_fieldNames;
 };
 
 $PackageWebCoreEnd

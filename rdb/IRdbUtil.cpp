@@ -121,9 +121,9 @@ bool IRdbUtil::isPrimaryKeyType(QMetaType::Type type)
 void IRdbUtil::detail::toBean(ISqlQuery &query, const IRdbTableInfo &info, void *ptr)
 {
     auto names = ::detail::getFieldNames(query.record());
-    for(const auto& field : info.fields){
-        if(names.contains(field.name)){
-            IMetaUtil::writeProperty(field.property, ptr, query.value(field.name));
+    for(const auto& field : info.m_fields){
+        if(names.contains(field.m_name)){
+            IMetaUtil::writeProperty(field.m_property, ptr, query.value(field.m_name));
         }
     }
 }
@@ -131,7 +131,7 @@ void IRdbUtil::detail::toBean(ISqlQuery &query, const IRdbTableInfo &info, void 
 void IRdbUtil::detail::toBean(ISqlQuery &query, QList<const IRdbEntityInfo::Field*> fields, void* ptr)
 {
     for(const auto& field : fields){
-        IMetaUtil::writeProperty(field->property, ptr, query.value(field->name));
+        IMetaUtil::writeProperty(field->m_property, ptr, query.value(field->m_name));
     }
 }
 

@@ -8,6 +8,7 @@ $PackageWebCoreBegin
 
 namespace detail
 {
+    void processIgnoredFields(const QMap<QString, QString> clsInfo, IRdbTableInfo& tableInfo);
     void processNotations(const QMap<QString, QString> clsInfo, IRdbTableInfo& tableInfo);
     bool setPrimaryKey(const QString& key, const QString& value, IRdbTableInfo& tableInfo);
     bool setUniqueKeys(const QString& key, const QString& value, IRdbTableInfo& tableInfo);
@@ -17,6 +18,7 @@ namespace detail
     bool setConstraintKeys(const QString& key, const QString& value, IRdbTableInfo& tableInfo);
     bool setInsertValueKeys(const QString& key, const QString& value, IRdbTableInfo& tableInfo);
     bool setGeneratValueKeys(const QString& key, const QString& value, IRdbTableInfo& tableInfo);
+    bool setIgnoredValueKeys(const QString& key, const QString& value, IRdbTableInfo& tableInfo);
 
     void processChecks(const QMap<QString, QString>& clsInfo, const IRdbTableInfo& tableInfo);
     void checkFieldTypes(const QMap<QString, QString>& clsInfo, const IRdbTableInfo& tableInfo);
@@ -27,11 +29,25 @@ namespace detail
 IRdbTableInfo::IRdbTableInfo(const QMetaObject &meta) : IRdbEntityInfo(meta)
 {
     auto clsInfo = IMetaUtil::getMetaClassInfoMap(meta);
+    detail::processIgnoredFields(clsInfo, *this);
     detail::processNotations(clsInfo, *this);
     detail::processChecks(clsInfo, *this);
 
-    for(int i=0; i<fields.size(); i++){
-        valueMakers.append(ValueMaker{});
+    for(int i=0; i<m_fields.size(); i++){
+        m_valueMakers.append(ValueMaker{});
+    }
+}
+
+void detail::processIgnoredFields(const QMap<QString, QString> clsInfo, IRdbTableInfo& tableInfo)
+{
+    for(const auto& name : clsInfo.keys()){
+        detail::setIgnoredValueKeys(name, clsInfo[name], tableInfo);
+    }
+    // 移除 fields, fieldNames 等
+    for(auto name : tableInfo.m_ignoredKeys){
+        auto index = tableInfo.m_fieldNames.indexOf(name);
+        tableInfo.m_fieldNames.removeAt(index);
+        tableInfo.m_fields.removeAt(index);
     }
 }
 
@@ -62,18 +78,19 @@ bool detail::setPrimaryKey(const QString& key, const QString& value, IRdbTableIn
 {
     static const char* const PREFIX = "sql_primaryKey__";
     if(key.startsWith(PREFIX)){
-        auto index = tableInfo.fieldNames.indexOf(value);
+        auto index = tableInfo.m_fieldNames.indexOf(value);
         if(index == -1){
-            QString tip = QString("Table: ").append(tableInfo.className)
-                    .append(" Why:").append("primary key incorrect");
+            QString tip = QString("Table: ").append(tableInfo.m_className)
+                    .append(" Why: ").append("primary key incorrect");
             IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
         }
-        if(tableInfo.primaryKey != -1){
-            QString tip = QString("Table: ").append(tableInfo.className)
-                    .append(" Why:").append("primary key already exist");
+        if(tableInfo.m_primaryKey != -1){
+            QString tip = QString("Table: ").append(tableInfo.m_className)
+                    .append(" Why: ").append("primary key already exist")
+                    .append(" Field: ").append(value);
             IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
         }
-        tableInfo.primaryKey = index;
+        tableInfo.m_primaryKey = index;
         return true;
     }
     return false;
@@ -83,13 +100,14 @@ bool detail::setUniqueKeys(const QString& key, const QString& value, IRdbTableIn
 {
     static const char* const PREFIX = "sql_unique_key__";
     if(key.startsWith(PREFIX)){
-        auto index = tableInfo.fieldNames.indexOf(value);
+        auto index = tableInfo.m_fieldNames.indexOf(value);
         if(index == -1){
-            QString tip = QString("Table: ").append(tableInfo.className)
-                    .append(" Why:").append("error unique field names");
+            QString tip = QString("Table: ").append(tableInfo.m_className)
+                    .append(" Why: ").append("error unique field names")
+                    .append(" Field: ").append(value);
             IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
         }
-        tableInfo.uniqueKeys.append(index);
+        tableInfo.m_uniqueKeys.append(index);
         return true;
     }
     return false;
@@ -99,13 +117,14 @@ bool detail::setNotNullKeys(const QString& key, const QString& value, IRdbTableI
 {
     static const char* const PREFIX = "sql_not_null_key__";
     if(key.startsWith(PREFIX)){
-        auto index = tableInfo.fieldNames.indexOf(value);
+        auto index = tableInfo.m_fieldNames.indexOf(value);
         if(index == -1){
-            QString tip = QString("Table: ").append(tableInfo.className)
-                    .append(" Why:").append("not null field not exist");
+            QString tip = QString("Table: ").append(tableInfo.m_className)
+                    .append(" Why: ").append("not null field not exist")
+                    .append(" Field: ").append(value);
             IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
         }
-        tableInfo.notNullKeys.append(index);
+        tableInfo.m_notNullKeys.append(index);
         return true;
     }
     return false;
@@ -115,12 +134,14 @@ bool detail::setAutoIncrementKeys(const QString &key, const QString &value, IRdb
 {
     static const char* const PREFIX = "sql_auto_increment__";
     if(key.startsWith(PREFIX)){
-        auto index = tableInfo.fieldNames.indexOf(value);
+        auto index = tableInfo.m_fieldNames.indexOf(value);
         if(index == -1){
-            QString tip = QString("Table: ").append(tableInfo.className).append(" Why:").append("not exist auto_increment field");
+            QString tip = QString("Table: ").append(tableInfo.m_className)
+                    .append(" Why: ").append("not exist auto_increment field")
+                    .append(" Field: ").append(value);
             IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
         }
-        tableInfo.autoIncrement = index;
+        tableInfo.m_autoIncrement = index;
         return true;
     }
     return false;
@@ -131,18 +152,20 @@ bool detail::setSqlTypeKeys(const QString& key, const QString& value, IRdbTableI
     static const char* const PREFIX = "sql_field_type__";
     if(key.startsWith(PREFIX)){
         auto fieldName = key.mid(QString(PREFIX).length());
-        auto index = tableInfo.fieldNames.indexOf(fieldName);
+        auto index = tableInfo.m_fieldNames.indexOf(fieldName);
         if(index == -1){
-            QString tip = QString("Table: ").append(tableInfo.className)
-                    .append(" Why:").append("sql type not exist");
+            QString tip = QString("Table: ").append(tableInfo.m_className)
+                    .append(" Why: ").append("sql type not exist")
+                    .append(" Field: ").append(value);
             IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
         }
-        if(tableInfo.sqlType.contains(index)){
-            QString tip = QString("Table: ").append(tableInfo.className)
-                    .append(" Why:").append("sql type already exist");
+        if(tableInfo.m_sqlType.contains(index)){
+            QString tip = QString("Table: ").append(tableInfo.m_className)
+                    .append(" Why: ").append("sql type already exist")
+                    .append(" Field: ").append(value);
             IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
         }
-        tableInfo.sqlType[index] = value;
+        tableInfo.m_sqlType[index] = value;
         return true;
     }
     return false;
@@ -153,18 +176,19 @@ bool detail::setConstraintKeys(const QString &key, const QString &value, IRdbTab
     static const char* const PREFIX = "sql_column_constraint__";
     if(key.startsWith(PREFIX)){
         auto fieldName = key.mid(QString(PREFIX).length());
-        auto index = tableInfo.fieldNames.indexOf(fieldName);
+        auto index = tableInfo.m_fieldNames.indexOf(fieldName);
         if(index == -1){
-            QString tip = QString("Table: ").append(tableInfo.className)
-                    .append(" Why:").append("sql constrait field not exist");
+            QString tip = QString("Table: ").append(tableInfo.m_className)
+                    .append(" Why: ").append("sql constrait field not exist");
             IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
         }
-        if(tableInfo.constraints.contains(index)){
-            QString tip = QString("Table: ").append(tableInfo.className)
-                    .append(" Why:").append("sql constrait in field already exist");
+        if(tableInfo.m_constraints.contains(index)){
+            QString tip = QString("Table: ").append(tableInfo.m_className)
+                    .append(" Why: ").append("sql constrait in field already exist")
+                    .append(" Field: ").append(value);
             IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
         }
-        tableInfo.constraints[index] = QString(value).replace("\"", "");
+        tableInfo.m_constraints[index] = QString(value).replace("\"", "");
         return true;
     }
     return false;
@@ -175,14 +199,15 @@ bool detail::setInsertValueKeys(const QString& key, const QString& value, IRdbTa
     static const char* const PREFIX = "sql_insert_value__";
     if(key.startsWith(PREFIX)){
         auto fieldName = key.mid(QString(PREFIX).length());
-        auto index = tableInfo.fieldNames.indexOf(fieldName);
+        auto index = tableInfo.m_fieldNames.indexOf(fieldName);
         if(index == -1){
-            QString tip = QString("Table: ").append(tableInfo.className)
-                    .append(" Why:").append("sql constrait field not exist");
+            QString tip = QString("Table: ").append(tableInfo.m_className)
+                    .append(" Why: ").append("sql Insert value key field not exist")
+                    .append(" Field: ").append(value);
             IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
         }
-        tableInfo.valueMakers[index].type = IRdbTableInfo::ValueMakerType::InsertValue;
-        tableInfo.valueMakers[index].insertValue = value;
+        tableInfo.m_valueMakers[index].type = IRdbTableInfo::ValueMakerType::InsertValue;
+        tableInfo.m_valueMakers[index].insertValue = value;
         return true;
     }
     return false;
@@ -193,19 +218,38 @@ bool detail::setGeneratValueKeys(const QString& key, const QString& value, IRdbT
     static const char* const PREFIX = "sql_generate_value__";
     if(key.startsWith(PREFIX)){
         auto fieldName = key.mid(QString(PREFIX).length());
-        auto index = tableInfo.fieldNames.indexOf(fieldName);
+        auto index = tableInfo.m_fieldNames.indexOf(fieldName);
         if(index == -1){
-            QString tip = QString("Table: ").append(tableInfo.className)
-                    .append(" Why:").append("sql constrait field not exist");
+            QString tip = QString("Table: ").append(tableInfo.m_className)
+                    .append(" Why: ").append("sql constrait field not exist")
+                    .append(" Field: ").append(value);
             IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
         }
-        tableInfo.valueMakers[index].type = IRdbTableInfo::ValueMakerType::GenerateValue;
-        tableInfo.valueMakers[index].generator = IRdbManage::instance().getAutoGenerateKeyFunction(value);
-        if(tableInfo.valueMakers[index].generator == nullptr){
-            QString tip = QString("Table: ").append(tableInfo.className)
-                    .append(" Why:").append("no field generator exist");
+        tableInfo.m_valueMakers[index].type = IRdbTableInfo::ValueMakerType::GenerateValue;
+        tableInfo.m_valueMakers[index].generator = IRdbManage::instance().getAutoGenerateKeyFunction(value);
+        if(tableInfo.m_valueMakers[index].generator == nullptr){
+            QString tip = QString("Table: ").append(tableInfo.m_className)
+                    .append(" Why: ").append("no field generator exist")
+                    .append(" Field: ").append(value);
             IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
         }
+        return true;
+    }
+    return false;
+}
+
+bool detail::setIgnoredValueKeys(const QString& key, const QString& value, IRdbTableInfo& tableInfo)
+{
+    static const char* const PREFIX = "sql_ignored_key__";
+    if(key.startsWith(PREFIX)){
+        auto index = tableInfo.m_fieldNames.indexOf(value);
+        if(index == -1){
+            QString tip = QString("Table: ").append(tableInfo.m_className)
+                    .append(" Why: ").append("sql ignored field not exist")
+                    .append(" Field: ").append(value);
+            IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
+        }
+        tableInfo.m_ignoredKeys.append(value);
         return true;
     }
     return false;
@@ -235,11 +279,11 @@ void detail::checkFieldTypes(const QMap<QString, QString> &clsInfo, const IRdbTa
         QMetaType::Type(qRegisterMetaType<std::string>())
     };
 
-    for(const auto& field : tableInfo.fields){
-        if(!allowTypes.contains(field.typeId)){
+    for(const auto& field : tableInfo.m_fields){
+        if(!allowTypes.contains(field.m_typeId) && !tableInfo.m_sqlType.contains(tableInfo.m_fieldNames.indexOf(field.m_name))){
             QString info = QString("this kind of type is not supported in table, please change to the supported type. \n"
-                                   "Type : ").append(QMetaType::typeName(field.typeId));
-            QString tip = QString("Table: ").append(tableInfo.className).append(" Why:").append(info);
+                                   "Type : ").append(QMetaType::typeName(field.m_typeId));
+            QString tip = QString("Table: ").append(tableInfo.m_className).append(" Why: ").append(info);
             IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
         }
     }
@@ -248,23 +292,23 @@ void detail::checkFieldTypes(const QMap<QString, QString> &clsInfo, const IRdbTa
 void detail::checkDuplicatedPrimaryKey(const QMap<QString, QString> &clsInfo, const IRdbTableInfo& tableInfo)
 {
     Q_UNUSED(clsInfo)
-    if(tableInfo.primaryKey == -1){
-        QString tip = QString("Table: ").append(tableInfo.className).append(" Why:").append("table has no priamary key, please mark one");
+    if(tableInfo.m_primaryKey == -1){
+        QString tip = QString("Table: ").append(tableInfo.m_className).append(" Why: ").append("table has no priamary key, please mark one");
         IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
     }
 
-    auto typeId = tableInfo.fields[tableInfo.primaryKey].typeId;
+    auto typeId = tableInfo.m_fields[tableInfo.m_primaryKey].m_typeId;
     if(!IRdbUtil::isPrimaryKeyType(typeId)){
-        QString info = tableInfo.className + " table has incorrect primary key annotated type. \n"
+        QString info = tableInfo.m_className + " table has incorrect primary key annotated type. \n"
                                    "the only allowed type is int, long, longlong/int64, QString\n"
-                                   "field:" + tableInfo.fields[tableInfo.primaryKey].name + " type:" + tableInfo.fields[tableInfo.primaryKey].typeName;
-        QString tip = QString("Table: ").append(tableInfo.className).append(" Why:").append(info);
+                                   "field:" + tableInfo.m_fields[tableInfo.m_primaryKey].m_name + " type:" + tableInfo.m_fields[tableInfo.m_primaryKey].m_typeName;
+        QString tip = QString("Table: ").append(tableInfo.m_className).append(" Why: ").append(info);
         IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
     }
 
     if(typeId != QMetaType::QString && (typeId != QMetaType::LongLong) ){
         QString info = QString("primary key that is number type recommended is qlonglong/qint64 type.\n"
-                               "current is ").append(QMetaType::typeName(typeId)).append(" in class ").append(tableInfo.className);
+                               "current is ").append(QMetaType::typeName(typeId)).append(" in class ").append(tableInfo.m_className);
         qWarning() << info;
     }
 }
@@ -284,8 +328,8 @@ void detail::checkAutoGenerateInfo(const QMap<QString, QString> &clsInfo, const 
         }
     }
     if(index >1){
-        QString info = tableInfo.className + " table: you can not have more than one increment note, please check";
-        QString tip = QString("Table: ").append(tableInfo.className).append(" Why:").append(info);
+        QString info = tableInfo.m_className + " table: you can not have more than one increment note, please check";
+        QString tip = QString("Table: ").append(tableInfo.m_className).append(" Why: ").append(info);
         IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
     }
 }

@@ -6,6 +6,18 @@
     static constexpr char const * $field_##name = #name ; \
     $BeanFieldDeclare(type, name)
 
+#define $ColumnDeclareWithRead(type, name, readFunc) \
+    static constexpr char const * $field_##name = #name ; \
+    $BeanFieldDeclareWithRead(type, name, readFunc)
+
+#define $ColumnDeclareWithWrite(type, name, writeFunc) \
+    static constexpr char const * $field_##name = #name ; \
+    $BeanFieldDeclareWithWrite(type, name, writeFunc)
+
+#define $ColumnDeclareWithReadWrite(type, name, readFunc, writeFunc) \
+    static constexpr char const * $field_##name = #name ; \
+    $BeanFieldDeclareWithReadWrite(type, name, readFunc, writeFunc)
+
 #define $Column_2(type, name) \
     static constexpr char const * $field_##name = #name ; \
     $BeanField(type, name)

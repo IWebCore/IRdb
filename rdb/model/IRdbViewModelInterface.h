@@ -49,7 +49,7 @@ template<typename T, typename View, typename Db, bool enabled>
 void  IRdbViewModelInterface<T, View, Db, enabled>::$task()
 {
     if constexpr (enabled){
-        const auto& name = m_viewInfo.entityName;
+        const auto& name = m_viewInfo.m_entityName;
         if(IRdbEntityModelWare<View, Db>::m_database.getRdbViews().contains(name)){
             Db::instance().dropView(m_viewInfo);
 //            qDebug().noquote() << m_database.getClassName() << "EXIST VIEW: " << name;

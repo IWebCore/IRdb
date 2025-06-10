@@ -21,63 +21,63 @@ $PackageWebCoreBegin
 QString IRdbDialectWare::createTableSql(const IRdbTableInfo &info) const
 {
     QStringList fields;
-    for (auto index = 0; index < info.fields.length(); index++) {
+    for (auto index = 0; index < info.m_fields.length(); index++) {
         fields.append(createSqlCommonKeyClause(info, index));
     }
 
     return QString("CREATE TABLE IF NOT EXISTS ")
-            .append(quoteName(info.entityName))
+            .append(quoteName(info.m_entityName))
             .append(" (").append(fields.join(", ") + ')');
 }
 
 QString IRdbDialectWare::dropTableSql(const IRdbTableInfo &info) const
 {
-    return "DROP TABLE IF EXISTS " + quoteName(info.entityName) + " CASCADE";
+    return "DROP TABLE IF EXISTS " + quoteName(info.m_entityName) + " CASCADE";
 }
 
 QString IRdbDialectWare::dropViewSql(const IRdbViewInfo &info) const
 {
-    return "DROP VIEW IF EXISTS " + quoteName(info.entityName);
+    return "DROP VIEW IF EXISTS " + quoteName(info.m_entityName);
 }
 
 QString IRdbDialectWare::countSql(const IRdbEntityInfo &info) const
 {
-    return "SELECT count(1) FROM " + quoteName(info.entityName);
+    return "SELECT count(1) FROM " + quoteName(info.m_entityName);
 }
 
 QString IRdbDialectWare::countSql(const IRdbEntityInfo &info, const IRdbCondition &condition) const
 {
-    return "SELECT count(1) FROM " + quoteName(info.entityName) + " " + conditionToSql(condition);
+    return "SELECT count(1) FROM " + quoteName(info.m_entityName) + " " + conditionToSql(condition);
 }
 
 void IRdbDialectWare::insert(ISqlQuery &query, const IRdbTableInfo &info, void *ptr) const
 {
     QStringList names, values;
-    for(int index=0; index<info.fields.length(); index++){
-        if(info.autoIncrement == index){
+    for(int index=0; index<info.m_fields.length(); index++){
+        if(info.m_autoIncrement == index){
             continue;
         }
 
-        const auto& field = info.fields[index];
-        const auto& maker = info.valueMakers[index];
-        names.append(field.name);
+        const auto& field = info.m_fields[index];
+        const auto& maker = info.m_valueMakers[index];
+        names.append(field.m_name);
         if(maker.type == IRdbTableInfo::ValueMakerType::InsertValue){
             values.append(maker.insertValue);
         }else if(maker.type == IRdbTableInfo::ValueMakerType::GenerateValue){
-            auto valueName = ":" + field.name;
+            auto valueName = ":" + field.m_name;
             values.append(valueName);
             auto value = maker.generator();
-            IMetaUtil::writeProperty(field.property, ptr, value);
+            IMetaUtil::writeProperty(field.m_property, ptr, value);
             query.bindParameter(valueName, value);
         }else{
-            auto valueName = ":" + field.name;
+            auto valueName = ":" + field.m_name;
             values.append(valueName);
-            query.bindParameter(valueName, IMetaUtil::readProperty(field.property, ptr));
+            query.bindParameter(valueName, IMetaUtil::readProperty(field.m_property, ptr));
         }
     }
 
     auto sql = QString("INSERT INTO ")
-            .append(quoteName(info.entityName)) .append(" (")
+            .append(quoteName(info.m_entityName)) .append(" (")
             .append(names.join(", ")).append( ") VALUES (").append(values.join(", ")).append(")");
     query.prepare(sql);
 }
@@ -85,29 +85,29 @@ void IRdbDialectWare::insert(ISqlQuery &query, const IRdbTableInfo &info, void *
 void IRdbDialectWare::insert(ISqlQuery& query, const IRdbTableInfo &info, const void * ptr) const
 {
     QStringList names, values;
-    for(int index=0; index<info.fields.length(); index++){
-        if(info.autoIncrement == index){
+    for(int index=0; index<info.m_fields.length(); index++){
+        if(info.m_autoIncrement == index){
             continue;
         }
 
-        const auto& field = info.fields[index];
-        const auto& maker = info.valueMakers[index];
-        names.append(field.name);
+        const auto& field = info.m_fields[index];
+        const auto& maker = info.m_valueMakers[index];
+        names.append(field.m_name);
         if(maker.type == IRdbTableInfo::ValueMakerType::InsertValue){
             values.append(maker.insertValue);
         }else if(maker.type == IRdbTableInfo::ValueMakerType::GenerateValue){
-            auto valueName = ":" + field.name;
+            auto valueName = ":" + field.m_name;
             values.append(valueName);
             query.bindParameter(valueName, maker.generator());
         }else{
-            auto valueName = ":" + field.name;
+            auto valueName = ":" + field.m_name;
             values.append(valueName);
-            query.bindParameter(valueName, IMetaUtil::readProperty(field.property, ptr));
+            query.bindParameter(valueName, IMetaUtil::readProperty(field.m_property, ptr));
         }
     }
 
     auto sql = QString("INSERT INTO ")
-            .append(quoteName(info.entityName)) .append(" (")
+            .append(quoteName(info.m_entityName)) .append(" (")
             .append(names.join(", ")).append( ") VALUES (").append(values.join(", ")).append(")");
     query.prepare(sql);
 }
@@ -121,29 +121,29 @@ void IRdbDialectWare::insertAll(ISqlQuery &query, const IRdbTableInfo &info, QVe
         values.append(QStringList{});
     }
 
-    for(int index=0; index<info.fields.length(); index++){
-        if(info.autoIncrement == index){
+    for(int index=0; index<info.m_fields.length(); index++){
+        if(info.m_autoIncrement == index){
             continue;
         }
 
-        const auto& field = info.fields[index];
-        const auto& maker = info.valueMakers[index];
-        names.append(field.name);
+        const auto& field = info.m_fields[index];
+        const auto& maker = info.m_valueMakers[index];
+        names.append(field.m_name);
         if(maker.type == IRdbTableInfo::ValueMakerType::InsertValue){
             for(int i=0; i<=count; i++){
                 values[i].append(maker.insertValue);
             }
         }else if(maker.type == IRdbTableInfo::ValueMakerType::GenerateValue){
             for(int i=0; i<count; i++){
-                auto valueName = ":" + field.name + "_" + QString::number(i);
+                auto valueName = ":" + field.m_name + "_" + QString::number(i);
                 values[i].append(valueName);
                 query.bindParameter(valueName, maker.generator());
             }
         }else {
             for(int i=0; i<count; i++){
-                auto valueName = ":" + field.name + "_" + QString::number(i);
+                auto valueName = ":" + field.m_name + "_" + QString::number(i);
                 values[i].append(valueName);
-                query.bindParameter(valueName, IMetaUtil::readProperty(field.property, ptrs[i]));
+                query.bindParameter(valueName, IMetaUtil::readProperty(field.m_property, ptrs[i]));
             }
         }
     }
@@ -154,56 +154,56 @@ void IRdbDialectWare::insertAll(ISqlQuery &query, const IRdbTableInfo &info, QVe
         args.append(list.join(", "));
     }
     auto sql = QString("INSERT INTO ")
-            .append(quoteName(info.entityName)) .append(" (")
+            .append(quoteName(info.m_entityName)) .append(" (")
             .append(names.join(", ")).append( ") VALUES (").append(args.join("), (")).append(")");
     query.prepare(sql);
 }
 
 QString IRdbDialectWare::findOneSql(const IRdbEntityInfo &info, const IRdbCondition &condition) const
 {
-    return "SELECT * FROM " + quoteName(info.entityName) + " " + conditionToSql(condition);
+    return "SELECT * FROM " + quoteName(info.m_entityName) + " " + conditionToSql(condition);
 }
 
 QString IRdbDialectWare::findAllSql(const IRdbEntityInfo &info) const
 {
-    return "SELECT * FROM " + quoteName(info.entityName);
+    return "SELECT * FROM " + quoteName(info.m_entityName);
 }
 
 QString IRdbDialectWare::findAllSql(const IRdbEntityInfo &info, const IRdbCondition &condition) const
 {
-    return "SELECT * FROM " + quoteName(info.entityName) + " " + conditionToSql(condition);
+    return "SELECT * FROM " + quoteName(info.m_entityName) + " " + conditionToSql(condition);
 }
 
 QString IRdbDialectWare::findColumnSql(const IRdbEntityInfo &info, const QStringList &columns) const
 {
     QString sql = "SELECT ";
-    sql.append(columns.join(", ")).append(" FROM ").append(quoteName(info.entityName));
+    sql.append(columns.join(", ")).append(" FROM ").append(quoteName(info.m_entityName));
     return sql;
 }
 
 QString IRdbDialectWare::findColumnSql(const IRdbEntityInfo &info, const QStringList &columns, const IRdbCondition &condition) const
 {
     QString sql = "SELECT ";
-    sql.append(columns.join(", ")).append(" FROM ").append(quoteName(info.entityName)) + " " + conditionToSql(condition);
+    sql.append(columns.join(", ")).append(" FROM ").append(quoteName(info.m_entityName)) + " " + conditionToSql(condition);
     return sql;
 }
 
 QString IRdbDialectWare::existSql(const IRdbEntityInfo &info, const IRdbCondition &condition) const
 {
-    return "SELECT EXISTS ( SELECT 1 FROM " + quoteName(info.entityName) + conditionToSql(condition) + ")";
+    return "SELECT EXISTS ( SELECT 1 FROM " + quoteName(info.m_entityName) + conditionToSql(condition) + ")";
 }
 
 QString IRdbDialectWare::updateOne(const IRdbTableInfo &info, const QStringList &columns) const
 {
     QStringList args;
-    QString id = info.fields[info.primaryKey].name;
+    QString id = info.m_fields[info.m_primaryKey].m_name;
     for(const QString& col : columns){
         if(col != id){
             args.append(col + "= :" + col);
         }
     }
 
-    return QString("UPDATE ").append(quoteName(info.entityName))
+    return QString("UPDATE ").append(quoteName(info.m_entityName))
             .append(" SET ").append(args.join(", "))
             .append(" WHERE " ).append(id).append(" = :").append(id);
 }
@@ -216,24 +216,24 @@ QString IRdbDialectWare::updateWhere(const IRdbTableInfo& info, const QVariantMa
         args.append(col + "= :" + col);
     }
 
-    return QString("UPDATE ").append(quoteName(info.entityName))
+    return QString("UPDATE ").append(quoteName(info.m_entityName))
             .append(" SET ").append(args.join(", "))
             .append(conditionToSql(condition));
 }
 
 QString IRdbDialectWare::deleteTableSql(const IRdbEntityInfo &info) const
 {
-    return "DELETE FROM " + quoteName(info.entityName);
+    return "DELETE FROM " + quoteName(info.m_entityName);
 }
 
 QString IRdbDialectWare::deleteTableSql(const IRdbEntityInfo &info, const IRdbCondition &condition) const
 {
-    return "DELETE FROM " + quoteName(info.entityName) + conditionToSql(condition);
+    return "DELETE FROM " + quoteName(info.m_entityName) + conditionToSql(condition);
 }
 
 QString IRdbDialectWare::truncateTableSql(const IRdbEntityInfo &info) const
 {
-    return "TRUNCATE TABLE " + quoteName(info.entityName);
+    return "TRUNCATE TABLE " + quoteName(info.m_entityName);
 }
 
 QString IRdbDialectWare::conditionToSql(const IRdbCondition & condition) const
@@ -451,24 +451,24 @@ QString IRdbDialectWare::fromHavingClause(const IRdbHavingClause &having) const
 
 QString IRdbDialectWare::createSqlCommonKeyClause(const IRdbTableInfo &info, int index) const
 {
-    const auto& name = quoteName(info.fieldNames[index]);
+    const auto& name = quoteName(info.m_fieldNames[index]);
     auto sqlType = getSqlType(info, index);
 
     QString piece = name + " " + sqlType;
-    if(info.notNullKeys.contains(index)){
+    if(info.m_notNullKeys.contains(index)){
         piece.append(" NOT NULL");
     }
-    if(info.uniqueKeys.contains(index)){
+    if(info.m_uniqueKeys.contains(index)){
         piece.append(" UNIQUE");
     }
-    if(info.primaryKey == index){
+    if(info.m_primaryKey == index){
         piece.append(" PRIMARY KEY");
     }
-    if(info.autoIncrement == index){
+    if(info.m_autoIncrement == index){
         piece.append(" AUTOINCREMENT");
     }
-    if(info.constraints.contains(index)){
-        piece.append(" ").append(info.constraints[index]);
+    if(info.m_constraints.contains(index)){
+        piece.append(" ").append(info.m_constraints[index]);
     }
     return piece;
 }

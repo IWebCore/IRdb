@@ -27,13 +27,14 @@ public:
     explicit IRdbTableInfo(const QMetaObject& meta);
 
 public:
-    int primaryKey {-1};
-    int autoIncrement{-1};
-    QList<int> notNullKeys;
-    QList<int> uniqueKeys;
-    QMap<int, QString> constraints;
-    QMap<int, QString> sqlType;
-    QVector<ValueMaker> valueMakers;
+    int m_primaryKey {-1};
+    int m_autoIncrement{-1};
+    QList<int> m_notNullKeys;   // note: this int value relate to fields, not meta4
+    QList<int> m_uniqueKeys;
+    QStringList m_ignoredKeys;
+    QMap<int, QString> m_constraints;
+    QMap<int, QString> m_sqlType;
+    QVector<ValueMaker> m_valueMakers;
 };
 
 $PackageWebCoreEnd

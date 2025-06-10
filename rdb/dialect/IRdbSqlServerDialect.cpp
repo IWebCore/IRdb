@@ -14,18 +14,18 @@ QString IRdbSqlServerDialect::databaseType() const
 QString IRdbSqlServerDialect::createTableSql(const IRdbTableInfo &info) const
 {
     QStringList fields;
-    for (auto index = 0; index < info.fields.length(); index++) {
+    for (auto index = 0; index < info.m_fields.length(); index++) {
         fields.append(createSqlCommonKeyClause(info, index));
     }
 
     return QString("CREATE TABLE ")
-            .append(info.entityName)
+            .append(info.m_entityName)
             .append(" (").append(fields.join(", ") + ')');
 }
 
 QString IRdbSqlServerDialect::dropTableSql(const IRdbTableInfo &info) const
 {
-    return "DROP TABLE IF EXISTS " + quoteName(info.entityName);
+    return "DROP TABLE IF EXISTS " + quoteName(info.m_entityName);
 }
 
 QString IRdbSqlServerDialect::getSqlType(const IRdbTableInfo &info, int index) const
@@ -51,11 +51,11 @@ QString IRdbSqlServerDialect::getSqlType(const IRdbTableInfo &info, int index) c
         {qMetaTypeId<std::string>(), "varchar(255)"},
         {qMetaTypeId<IString>(), "varchar(255)"},
     };
-    if(info.sqlType.contains(index)){
-        return info.sqlType[index];
+    if(info.m_sqlType.contains(index)){
+        return info.m_sqlType[index];
     }
 
-    auto typeId = info.fields[index].typeId;
+    auto typeId = info.m_fields[index].m_typeId;
     if(!map.contains(typeId)){
         QString tip = QString("Type is not supported. Type:").append(QVariant::typeToName(typeId));
         IRdbAbort::abortDialectError(tip, $ISourceLocation);
@@ -65,24 +65,24 @@ QString IRdbSqlServerDialect::getSqlType(const IRdbTableInfo &info, int index) c
 
 QString IRdbSqlServerDialect::createSqlCommonKeyClause(const IRdbTableInfo &info, int index) const
 {
-    const auto& name = info.fieldNames[index];
+    const auto& name = info.m_fieldNames[index];
     auto sqlType = getSqlType(info, index);
 
     QString piece = name + " " + sqlType;
-    if(info.notNullKeys.contains(index)){
+    if(info.m_notNullKeys.contains(index)){
         piece.append(" NOT NULL");
     }
-    if(info.uniqueKeys.contains(index)){
+    if(info.m_uniqueKeys.contains(index)){
         piece.append(" UNIQUE");
     }
-    if(info.primaryKey == index){
+    if(info.m_primaryKey == index){
         piece.append(" PRIMARY KEY");
     }
-    if(info.autoIncrement == index){
+    if(info.m_autoIncrement == index){
         piece.append(" IDENTITY(1,1)");
     }
-    if(info.constraints.contains(index)){
-        piece.append(" ").append(info.constraints[index]);
+    if(info.m_constraints.contains(index)){
+        piece.append(" ").append(info.m_constraints[index]);
     }
     return piece;
 }

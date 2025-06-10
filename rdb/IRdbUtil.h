@@ -110,8 +110,8 @@ QList<T> IRdbUtil::getBeans(ISqlQuery &query)
     while(query.next()){
         if(!isFieldReady){
             const auto& record = query.record();
-            for(const auto& field : info.fields){
-                if(record.contains(field.name)){
+            for(const auto& field : info.m_fields){
+                if(record.contains(field.m_name)){
                     fields.append(&field);
                 }
             }

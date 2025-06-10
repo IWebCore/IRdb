@@ -9,26 +9,25 @@ $PackageWebCoreBegin
 IRdbEntityInfo::IRdbEntityInfo(const QMetaObject &meta)
     : m_metaObject(meta)
 {
-    this->className = meta.className();
-    this->entityName = IMetaUtil::getMetaClassInfoByName(meta, "sql_entityName", this->className);
+    this->m_className = meta.className();
+    this->m_entityName = IMetaUtil::getMetaClassInfoByName(meta, "sql_entityName", this->m_className);
 
     int count = meta.propertyCount();
     for(int i=0; i<count; i++){
         Field field;
-        field.index = i;
-        field.property = meta.property(i);
-        field.typeName = field.property.typeName();
-        field.name = field.property.name();
-        fieldNames.append(field.name);
-        field.typeId = QMetaType::Type(field.property.type());
-        if(field.typeId == QMetaType::User){
-            field.typeId = QMetaType::Type(QMetaType::type(field.typeName.toUtf8()));
-            if(field.typeId == QMetaType::UnknownType){
-                QString tip = QString("in your field declaration, your field type is not registered, please register it. Field:").append(field.name);
+        field.m_property = meta.property(i);
+        field.m_typeName = field.m_property.typeName();
+        field.m_name = field.m_property.name();
+        m_fieldNames.append(field.m_name);
+        field.m_typeId = QMetaType::Type(field.m_property.type());
+        if(field.m_typeId == QMetaType::User){
+            field.m_typeId = QMetaType::Type(QMetaType::type(field.m_typeName.toUtf8()));
+            if(field.m_typeId == QMetaType::UnknownType){
+                QString tip = QString("in your field declaration, your field type is not registered, please register it. Field:").append(field.m_name);
                 IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
             }
         }
-        this->fields.append(field);
+        this->m_fields.append(field);
     }
 }
 

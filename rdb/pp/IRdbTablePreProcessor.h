@@ -27,5 +27,8 @@
 #define $GenerateValue(name, value) \
     Q_CLASSINFO(PP_STRING(sql_generate_value__##name), #value)
 
+#define $SqlIgnored(name)   \
+    Q_CLASSINFO(PP_STRING(sql_ignored_key__##name), #name)
+
 #define $TableField $Column
 #define $TableFieldDeclare $ColumnDeclare

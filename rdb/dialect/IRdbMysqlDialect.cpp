@@ -33,11 +33,11 @@ QString IRdbMysqlDialect::getSqlType(const IRdbTableInfo &info, int index) const
         {qMetaTypeId<std::string>(), "VARCHAR(255)"},
         {qMetaTypeId<IString>(), "VARCHAR(255)"},
     };
-    if(info.sqlType.contains(index)){
-        return info.sqlType[index];
+    if(info.m_sqlType.contains(index)){
+        return info.m_sqlType[index];
     }
 
-    auto typeId = info.fields[index].typeId;
+    auto typeId = info.m_fields[index].m_typeId;
     if(!map.contains(typeId)){
         QString tip = QString("Type is not supported. Type:").append(QVariant::typeToName(typeId));
         IRdbAbort::abortDialectError(tip, $ISourceLocation);
@@ -47,24 +47,24 @@ QString IRdbMysqlDialect::getSqlType(const IRdbTableInfo &info, int index) const
 
 QString IRdbMysqlDialect::createSqlCommonKeyClause(const IRdbTableInfo &info, int index) const
 {
-    const auto& name = info.fieldNames[index];
+    const auto& name = info.m_fieldNames[index];
     auto sqlType = getSqlType(info, index);
 
     QString piece = name + " " + sqlType;
-    if(info.notNullKeys.contains(index)){
+    if(info.m_notNullKeys.contains(index)){
         piece.append(" NOT NULL");
     }
-    if(info.uniqueKeys.contains(index)){
+    if(info.m_uniqueKeys.contains(index)){
         piece.append(" UNIQUE");
     }
-    if(info.primaryKey == index){
+    if(info.m_primaryKey == index){
         piece.append(" PRIMARY KEY");
     }
-    if(info.autoIncrement == index){
+    if(info.m_autoIncrement == index){
         piece.append(" AUTO_INCREMENT");
     }
-    if(info.constraints.contains(index)){
-        piece.append(" ").append(info.constraints[index]);
+    if(info.m_constraints.contains(index)){
+        piece.append(" ").append(info.m_constraints[index]);
     }
     return piece;
 }
