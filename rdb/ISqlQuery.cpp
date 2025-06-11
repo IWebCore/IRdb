@@ -52,7 +52,7 @@ bool ISqlQuery::exec()
     bindExecParameters();
     auto ret = QSqlQuery::exec();
     if(!ret && (lastError().type() != QSqlError::NoError)){
-        qDebug() << lastQuery();
+        qDebug().noquote() << lastQuery();
         qDebug().noquote() << lastError().text();
         throw IRdbException(lastError());
     }
