@@ -2,6 +2,7 @@ INCLUDEPATH += $$PWD
 
 HEADERS += \
     $$PWD/rdb/IRdbAbort.h \
+    $$PWD/rdb/IRdbAnnomacro.h \
     $$PWD/rdb/IRdbCatagory.h \
     $$PWD/rdb/IRdbManage.h \
     $$PWD/rdb/IRdbUtil.h \

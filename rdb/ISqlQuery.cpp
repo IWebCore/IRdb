@@ -1,5 +1,5 @@
 ﻿#include "ISqlQuery.h"
-#include "core/config/IContextImport.h"
+#include "core/config/IProfileImport.h"
 #include "rdb/dialect/IRdbDialectWare.h"
 #include "rdb/exception/IRdbException.h"
 #include "rdb/database/IRdbConnection.h"
@@ -36,6 +36,8 @@ ISqlQuery::ISqlQuery(const ISqlQuery &query)
 
 bool ISqlQuery::exec(const QString &sql)
 {
+    static $Bool showSql{"/rdb/showSql", true};
+
     bindExecParameters();
     auto ret = QSqlQuery::exec(sql);
     if(!ret && (lastError().type() != QSqlError::NoError)){
@@ -43,7 +45,9 @@ bool ISqlQuery::exec(const QString &sql)
         qDebug().noquote() << lastError().text();
         throw IRdbException(lastError());
     }
-    qDebug().noquote() << m_dialect.databaseType() << lastQuery();
+    if(*showSql){
+        qDebug().noquote() << m_dialect.databaseType() << lastQuery();
+    }
     return ret;
 }
 
