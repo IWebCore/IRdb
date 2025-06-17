@@ -36,7 +36,7 @@ ISqlQuery::ISqlQuery(const ISqlQuery &query)
 
 bool ISqlQuery::exec(const QString &sql)
 {
-    static $Bool showSql{"/rdb/showSql", true};
+    static $Bool showSql{"/rdb/showSql", false};
 
     bindExecParameters();
     auto ret = QSqlQuery::exec(sql);
@@ -47,20 +47,29 @@ bool ISqlQuery::exec(const QString &sql)
     }
     if(*showSql){
         qDebug().noquote() << m_dialect.databaseType() << lastQuery();
+        for(const QString& key : m_parameters.keys()){
+            qDebug() << "bound: " << key << "->" << m_parameters[key];
+        }
     }
     return ret;
 }
 
 bool ISqlQuery::exec()
 {
+    static $Bool showSql{"/rdb/showSql", false};
     bindExecParameters();
-    auto ret = QSqlQuery::exec();
+    auto ret = QSqlQuery::exec();    
     if(!ret && (lastError().type() != QSqlError::NoError)){
         qDebug().noquote() << lastQuery();
         qDebug().noquote() << lastError().text();
         throw IRdbException(lastError());
     }
-    qDebug().noquote() << m_dialect.databaseType() << lastQuery();
+    if(*showSql){
+        qDebug().noquote() << m_dialect.databaseType() << lastQuery() << "11";
+        for(const QString& key : m_parameters.keys()){
+            qDebug() << "bound: " << key << "->" << m_parameters[key];
+        }
+    }
     return ret;
 }
 

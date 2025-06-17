@@ -27,6 +27,7 @@ public:
     IRdbCondition(IRdbOrderByClause&& orderBy);
     IRdbCondition(IRdbGroupByClause&& groupBy);
     IRdbCondition(IRdbLimitClause&& limit);
+    IRdbCondition(IRdbHavingClause&& having);
 
 public:
     IRdbCondition& where(const QString& sql, IRdb::Relation = IRdb::Relation::And);
@@ -62,7 +63,7 @@ public:
     IRdbCondition& orderByDesc(const QString& field);
 
 public:
-    IRdbCondition& having(const QString& sql, IRdb::Relation relation);
+    IRdbCondition& having(const QString& sql, IRdb::Relation relation = IRdb::Relation::And);
 
 public:
     IRdbCondition& limit(unsigned long long limit, unsigned long long offset=-1);

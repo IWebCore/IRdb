@@ -2,11 +2,6 @@
 
 $PackageWebCoreBegin
 
-QString IRdbWhereClause::getRelation() const
-{
-   return m_isAnd ? " AND " : " OR ";
-}
-
 IRdbWhereClause IRdb::Not(IRdbWhereClause && clause)
 {
     clause.m_isNot = !clause.m_isNot;
@@ -191,7 +186,7 @@ IRdbWhereClause IRdb::whereIsNull(const QString &field, IRdb::Relation relation)
 {
     IRdbWhereClause clause;
     clause.m_type = IRdbWhereClause::Type::WhereIsNull;
-    clause.m_field == field;
+    clause.m_field = field;
     clause.m_isAnd = !(relation & 0b01);
     clause.m_isNot = !(relation & 0b10);
     return clause;
@@ -201,7 +196,7 @@ IRdbWhereClause IRdb::whereIsNotNull(const QString &field, IRdb::Relation relati
 {
     IRdbWhereClause clause;
     clause.m_type = IRdbWhereClause::Type::WhereIsNotNull;
-    clause.m_field == field;
+    clause.m_field = field;
     clause.m_isAnd = !(relation & 0b01);
     clause.m_isNot = !(relation & 0b10);
     return clause;

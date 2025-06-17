@@ -9,13 +9,12 @@ $PackageWebCoreBegin
 struct IRdbHavingClause
 {
 public:
-    IRdbHavingClause();
-    IRdbHavingClause(const QString& sql);
+    IRdbHavingClause() = default;
+    IRdbHavingClause(const QString& sql, IRdb::Relation relation=IRdb::Relation::And);
 
 public:
     QString m_havingSql;
-    bool m_isAnd{true};
-    bool m_isNot{false};
+    IRdb::Relation m_relation;
 };
 
 namespace IRdb

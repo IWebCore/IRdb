@@ -57,6 +57,11 @@ IRdbCondition::IRdbCondition(IRdbLimitClause &&limit) : m_impl(new IRdbCondition
     m_impl->m_limit = std::move(limit);
 }
 
+IRdbCondition::IRdbCondition(IRdbHavingClause &&having) : m_impl(new IRdbConditionImpl)
+{
+    m_impl->m_havings.push_back(std::move(having));
+}
+
 IRdbCondition &IRdbCondition::where(const QString &sql, IRdb::Relation relation)
 {
     return append(IRdb::where(sql, relation));

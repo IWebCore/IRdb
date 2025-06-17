@@ -3,10 +3,6 @@
 
 $PackageWebCoreBegin
 
-IRdbGroupByClause::IRdbGroupByClause()
-{
-}
-
 IRdbGroupByClause::IRdbGroupByClause(const QString & field)
     : m_field(field)
 {

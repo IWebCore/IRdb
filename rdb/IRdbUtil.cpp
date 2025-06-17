@@ -118,7 +118,7 @@ bool IRdbUtil::isPrimaryKeyType(QMetaType::Type type)
     return PrimaryKeyTypes.indexOf(type) != -1;
 }
 
-void IRdbUtil::detail::toBean(ISqlQuery &query, const IRdbTableInfo &info, void *ptr)
+void IRdbUtil::detail::toEntity(ISqlQuery &query, const IRdbTableInfo &info, void *ptr)
 {
     auto names = ::detail::getFieldNames(query.record());
     for(const auto& field : info.m_fields){
@@ -128,7 +128,19 @@ void IRdbUtil::detail::toBean(ISqlQuery &query, const IRdbTableInfo &info, void 
     }
 }
 
-void IRdbUtil::detail::toBean(ISqlQuery &query, QList<const IRdbEntityInfo::Field*> fields, void* ptr)
+void IRdbUtil::detail::toBean(ISqlQuery &query, const QMetaObject &obj, void *ptr)
+{
+    auto names = ::detail::getFieldNames(query.record());
+    auto count = obj.propertyCount();
+    for(int i=0; i<count; i++){
+        const auto& name = obj.property(i).name();
+        if(names.contains(obj.property(i).name())){
+            IMetaUtil::writeProperty(obj.property(i), ptr, query.value(name));
+        }
+    }
+}
+
+void IRdbUtil::detail::toEntity(ISqlQuery &query, QList<const IRdbEntityInfo::Field*> fields, void* ptr)
 {
     for(const auto& field : fields){
         IMetaUtil::writeProperty(field->m_property, ptr, query.value(field->m_name));
@@ -288,7 +300,91 @@ QVariantList IRdbUtil::getVariantList(ISqlQuery &query)
 QList<int> IRdbUtil::getIntList(ISqlQuery &query)
 {
     auto result = ::detail::getListValues(query);
+    return toIntList(result);
+}
 
+QList<uint> IRdbUtil::getUintList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+    return toUintList(result);
+}
+
+QList<qulonglong> IRdbUtil::getULongLongList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+    return toULongLongList(result);
+}
+
+QList<qlonglong> IRdbUtil::getLongLongList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+    return toLongLongList(result);
+}
+
+QList<float> IRdbUtil::getFloatList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+    return toFloatList(result);
+}
+
+QList<double> IRdbUtil::getDoubleList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+    return toDoubleList(result);
+}
+
+QList<bool> IRdbUtil::getBoolList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+    return toBoolList(result);
+}
+
+QStringList IRdbUtil::getStringList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+    return toStringList(result);
+}
+
+QList<QDate> IRdbUtil::getDateList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+    return toDateList(result);
+}
+
+QList<QTime> IRdbUtil::getTimeList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+    return toTimeList(result);
+}
+
+QList<QDateTime> IRdbUtil::getDateTimeList(ISqlQuery &query)
+{
+    auto result = ::detail::getListValues(query);
+    return toDateTimeList(result);
+}
+
+QList<QVariantMap> IRdbUtil::getVariantMapList(ISqlQuery &query)
+{
+    QList<QVariantMap> ret;
+
+    QStringList fieldNames;
+    bool flag{false};
+    while(query.next()){
+        if(!flag){
+            fieldNames = ::detail::getFieldNames(query.record());
+            flag = true;
+        }
+        QVariantMap map;
+        for(const auto& field : fieldNames){
+            map[field] = query.value(field);
+        }
+        ret.append(map);
+    }
+    return ret;
+}
+
+QList<int> IRdbUtil::toIntList(const QVariantList& result)
+{
     bool ok;
     QList<int> ret;
     for(const auto& val : result){
@@ -300,10 +396,8 @@ QList<int> IRdbUtil::getIntList(ISqlQuery &query)
     return ret;
 }
 
-QList<uint> IRdbUtil::getUintList(ISqlQuery &query)
+QList<uint> IRdbUtil::toUintList(const QVariantList& result)
 {
-    auto result = ::detail::getListValues(query);
-
     bool ok;
     QList<uint> ret;
     for(const auto& val : result){
@@ -315,10 +409,8 @@ QList<uint> IRdbUtil::getUintList(ISqlQuery &query)
     return ret;
 }
 
-QList<qulonglong> IRdbUtil::getULongLongList(ISqlQuery &query)
+QList<qulonglong> IRdbUtil::toULongLongList(const QVariantList& result)
 {
-    auto result = ::detail::getListValues(query);
-
     bool ok;
     QList<qulonglong> ret;
     for(const auto& val : result){
@@ -330,10 +422,8 @@ QList<qulonglong> IRdbUtil::getULongLongList(ISqlQuery &query)
     return ret;
 }
 
-QList<qlonglong> IRdbUtil::getLongLongList(ISqlQuery &query)
+QList<qlonglong> IRdbUtil::toLongLongList(const QVariantList& result)
 {
-    auto result = ::detail::getListValues(query);
-
     bool ok;
     QList<qlonglong> ret;
     for(const auto& val : result){
@@ -345,10 +435,8 @@ QList<qlonglong> IRdbUtil::getLongLongList(ISqlQuery &query)
     return ret;
 }
 
-QList<float> IRdbUtil::getFloatList(ISqlQuery &query)
+QList<float> IRdbUtil::toFloatList(const QVariantList& result)
 {
-    auto result = ::detail::getListValues(query);
-
     bool ok;
     QList<float> ret;
     for(const auto& val : result){
@@ -360,10 +448,8 @@ QList<float> IRdbUtil::getFloatList(ISqlQuery &query)
     return ret;
 }
 
-QList<double> IRdbUtil::getDoubleList(ISqlQuery &query)
+QList<double> IRdbUtil::toDoubleList(const QVariantList& result)
 {
-    auto result = ::detail::getListValues(query);
-
     bool ok;
     QList<double> ret;
     for(const auto& val : result){
@@ -375,10 +461,8 @@ QList<double> IRdbUtil::getDoubleList(ISqlQuery &query)
     return ret;
 }
 
-QList<bool> IRdbUtil::getBoolList(ISqlQuery &query)
+QList<bool> IRdbUtil::toBoolList(const QVariantList& result)
 {
-    auto result = ::detail::getListValues(query);
-
     bool ok;
     QList<bool> ret;
     for(const auto& val : result){
@@ -391,10 +475,8 @@ QList<bool> IRdbUtil::getBoolList(ISqlQuery &query)
     return ret;
 }
 
-QStringList IRdbUtil::getStringList(ISqlQuery &query)
+QStringList IRdbUtil::toStringList(const QVariantList& result)
 {
-    auto result = ::detail::getListValues(query);
-
     QStringList ret;
     for(const auto& val : result){
         ret.append(val.toString());
@@ -402,10 +484,8 @@ QStringList IRdbUtil::getStringList(ISqlQuery &query)
     return ret;
 }
 
-QList<QDate> IRdbUtil::getDateList(ISqlQuery &query)
+QList<QDate> IRdbUtil::toDateList(const QVariantList& result)
 {
-    auto result = ::detail::getListValues(query);
-
     bool ok;
     QList<QDate> dates;
     for(const QVariant& val : result){
@@ -432,10 +512,8 @@ QList<QDate> IRdbUtil::getDateList(ISqlQuery &query)
     return dates;
 }
 
-QList<QTime> IRdbUtil::getTimeList(ISqlQuery &query)
+QList<QTime> IRdbUtil::toTimeList(const QVariantList& result)
 {
-    auto result = ::detail::getListValues(query);
-
     bool ok;
     QList<QTime> ret;
     for(const QVariant& val : result){
@@ -462,10 +540,8 @@ QList<QTime> IRdbUtil::getTimeList(ISqlQuery &query)
     return ret;
 }
 
-QList<QDateTime> IRdbUtil::getDateTimeList(ISqlQuery &query)
+QList<QDateTime> IRdbUtil::toDateTimeList(const QVariantList& result)
 {
-    auto result = ::detail::getListValues(query);
-
     bool ok;
     QList<QDateTime> ret;
     for(const QVariant& val : result){
@@ -485,26 +561,6 @@ QList<QDateTime> IRdbUtil::getDateTimeList(ISqlQuery &query)
         default:
             IRdbAbort::abortRdbUtilError("currently other type of DateTime not supported", $ISourceLocation);
         }
-    }
-    return ret;
-}
-
-QList<QVariantMap> IRdbUtil::getVariantMapList(ISqlQuery &query)
-{
-    QList<QVariantMap> ret;
-
-    QStringList fieldNames;
-    bool flag{false};
-    while(query.next()){
-        if(!flag){
-            fieldNames = ::detail::getFieldNames(query.record());
-            flag = true;
-        }
-        QVariantMap map;
-        for(const auto& field : fieldNames){
-            map[field] = query.value(field);
-        }
-        ret.append(map);
     }
     return ret;
 }

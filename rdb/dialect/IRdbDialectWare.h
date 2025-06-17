@@ -67,6 +67,7 @@ protected:
     QString toLimitSql(const IRdbCondition&) const;
 
     QString fromWhereClause(const IRdbWhereClause&) const;
+    QString fromWhereClauseImpl(const IRdbWhereClause&) const;
     QString fromOrderByClause(const IRdbOrderByClause&) const;
     virtual QString fromLimitClause(const IRdbLimitClause&) const;
     QString fromGroupByClause(const IRdbGroupByClause&) const;

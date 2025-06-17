@@ -14,26 +14,27 @@ namespace IRdbUtil
 {
     namespace detail
     {
-        void toBean(ISqlQuery& query, const IRdbTableInfo& info, void* ptr);
-        void toBean(ISqlQuery& query, QList<const IRdbEntityInfo::Field*> fields, void* ptr);
+        void toBean(ISqlQuery& query, const QMetaObject& obj, void* ptr);
+        void toEntity(ISqlQuery& query, const IRdbTableInfo& info, void* ptr);
+        void toEntity(ISqlQuery& query, QList<const IRdbEntityInfo::Field*> fields, void* ptr);
     }
 
     bool isPrimaryKeyType(QMetaType::Type type);
 
-// 单行单列 获取
-//    int getInt(ISqlQuery& query, bool& ok);
-//    uint getUint(ISqlQuery& query, bool& ok);
-//    qulonglong getULongLong(ISqlQuery& query, bool& ok);
-//    qlonglong getLongLong(ISqlQuery& query, bool& ok);
-//    float getFloat(ISqlQuery& query, bool& ok);
-//    double getDouble(ISqlQuery& query, bool& ok);
-//    bool getBool(ISqlQuery& query, bool& ok);
-//    QDate getDate(ISqlQuery& query, bool& ok);
-//    QTime getTime(ISqlQuery& query, bool& ok);
-//    QDateTime getDateTime(ISqlQuery& query, bool& ok);
-//    QString getString(ISqlQuery& query, bool& ok);
-//    QVariant getVariant(ISqlQuery& query, bool& ok);
-//    QVariantMap getMap(ISqlQuery& query, bool& ok);
+///////// single value
+    int getInt(ISqlQuery& query, bool& ok);
+    uint getUint(ISqlQuery& query, bool& ok);
+    qulonglong getULongLong(ISqlQuery& query, bool& ok);
+    qlonglong getLongLong(ISqlQuery& query, bool& ok);
+    float getFloat(ISqlQuery& query, bool& ok);
+    double getDouble(ISqlQuery& query, bool& ok);
+    bool getBool(ISqlQuery& query, bool& ok);
+    QDate getDate(ISqlQuery& query, bool& ok);
+    QTime getTime(ISqlQuery& query, bool& ok);
+    QDateTime getDateTime(ISqlQuery& query, bool& ok);
+    QString getString(ISqlQuery& query, bool& ok);
+    QVariant getVariant(ISqlQuery& query, bool& ok);
+    QVariantMap getMap(ISqlQuery& query, bool& ok);
 
 #define PP_GET_TYPE_VALUE( TYPE, FUNC )                      \
     TYPE FUNC (ISqlQuery& query, bool& ok);                  \
@@ -61,6 +62,7 @@ namespace IRdbUtil
     PP_GET_TYPE_VALUE(QVariantMap, getMap)
 #undef PP_GET_TYPE_VALUE
 
+/////// list values;
     QVariantList getVariantList(ISqlQuery& query);
     QList<int> getIntList(ISqlQuery& query);
     QList<uint> getUintList(ISqlQuery& query);
@@ -73,13 +75,50 @@ namespace IRdbUtil
     QList<QDate> getDateList(ISqlQuery& query);
     QList<QTime> getTimeList(ISqlQuery& query);
     QList<QDateTime> getDateTimeList(ISqlQuery& query);
-
     QList<QVariantMap> getVariantMapList(ISqlQuery& query);
+
+//////// toXxx functions
+    QList<int> toIntList(const QVariantList&);
+    QList<uint> toUintList(const QVariantList&);
+    QList<qulonglong> toULongLongList(const QVariantList&);
+    QList<qlonglong> toLongLongList(const QVariantList&);
+    QList<float> toFloatList(const QVariantList&);
+    QList<double> toDoubleList(const QVariantList&);
+    QList<bool> toBoolList(const QVariantList&);
+    QStringList toStringList(const QVariantList&);
+    QList<QDate> toDateList(const QVariantList&);
+    QList<QTime> toTimeList(const QVariantList&);
+    QList<QDateTime> toDateTimeList(const QVariantList&);
+
+    template<typename T>
+    IResult<T> getEntity(ISqlQuery& query);
+
+    template <typename T>
+    QList<T> getEntities(ISqlQuery& query);
 
     template<typename T>
     IResult<T> getBean(ISqlQuery& query);
-    template <typename T>
+
+    template<typename T>
     QList<T> getBeans(ISqlQuery& query);
+}
+
+template<typename T>
+IResult<T> IRdbUtil::getEntity(ISqlQuery& query)
+{
+    bool exist{false};
+    T t;
+    while(query.next()){
+        if(exist){
+            return std::nullopt;
+        }
+        detail::toEntity(query, T::staticEntityInfo(), &t);
+        exist = true;
+    }
+    if(exist){
+        return t;
+    }
+    return std::nullopt;
 }
 
 template<typename T>
@@ -91,9 +130,10 @@ IResult<T> IRdbUtil::getBean(ISqlQuery& query)
         if(exist){
             return std::nullopt;
         }
-        detail::toBean(query, T::staticEntityInfo(), &t);
+        detail::toBean(query, T::staticMetaObject, &t);
         exist = true;
     }
+
     if(exist){
         return t;
     }
@@ -101,7 +141,7 @@ IResult<T> IRdbUtil::getBean(ISqlQuery& query)
 }
 
 template<class T>
-QList<T> IRdbUtil::getBeans(ISqlQuery &query)
+QList<T> IRdbUtil::getEntities(ISqlQuery &query)
 {
     const IRdbEntityInfo& info = T::staticEntityInfo();
     QList<T> beans;
@@ -119,8 +159,20 @@ QList<T> IRdbUtil::getBeans(ISqlQuery &query)
         }
 
         T t;
-        detail::toBean(query, fields, &t);
+        detail::toEntity(query, fields, &t);
         beans.append(t);
+    }
+    return beans;
+}
+
+template<class T>
+QList<T> IRdbUtil::getBeans(ISqlQuery &query)
+{
+    const auto& metaInfo = T::staticMetaObject;
+    QList<T> beans;
+    while(query.next()){
+        T bean;
+        beans.append(detail::toBean(query, metaInfo, &bean));
     }
     return beans;
 }

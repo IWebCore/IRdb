@@ -89,7 +89,7 @@ IResult<Entity> IRdbEntityModelWare<Entity, Db>::findOne(const IRdbCondition& co
         }
         return std::nullopt;
     }
-    return IRdbUtil::getBean<Entity>(query);
+    return IRdbUtil::getEntity<Entity>(query);
 }
 
 template<typename Entity, typename Db>
@@ -97,7 +97,7 @@ QList<Entity> IRdbEntityModelWare<Entity, Db>::findAll()
 {
     auto query = createQuery(m_dialect.findAllSql(entityInfo()));
     query.exec();
-    return IRdbUtil::getBeans<Entity>(query);
+    return IRdbUtil::getEntities<Entity>(query);
 }
 
 template<typename Entity, typename Db>
@@ -106,7 +106,7 @@ QList<Entity> IRdbEntityModelWare<Entity, Db>::findAll(const IRdbCondition& cond
     auto query = createQuery(m_dialect.findAllSql(entityInfo(), condition));
     condition.bindParameters(query);
     query.exec();
-    return IRdbUtil::getBeans<Entity>(query);
+    return IRdbUtil::getEntities<Entity>(query);
 }
 
 template<typename Entity, typename Db>
@@ -123,6 +123,7 @@ template<typename Entity, typename Db>
 QVariantList IRdbEntityModelWare<Entity, Db>::findColumn(const QString &column, const IRdbCondition &condition)
 {
     auto query = createQuery(m_dialect.findColumnSql(entityInfo(), {column}, condition));
+    condition.bindParameters(query);
     if(!query.exec()){
         return {};
     }

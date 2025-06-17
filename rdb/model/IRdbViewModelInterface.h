@@ -48,12 +48,10 @@ double IRdbViewModelInterface<T, View, Db, enabled>::$order() const
 template<typename T, typename View, typename Db, bool enabled>
 void  IRdbViewModelInterface<T, View, Db, enabled>::$task()
 {
-    if constexpr (enabled){
+    if /*constexpr*/ (enabled){
         const auto& name = m_viewInfo.m_entityName;
         if(IRdbEntityModelWare<View, Db>::m_database.getRdbViews().contains(name)){
             Db::instance().dropView(m_viewInfo);
-//            qDebug().noquote() << m_database.getClassName() << "EXIST VIEW: " << name;
-//            return;
         }
 
         auto sql = createViewSql();
@@ -64,7 +62,7 @@ void  IRdbViewModelInterface<T, View, Db, enabled>::$task()
             IRdbAbort::abortEntityCannotBeCreated("no create view sql clause exist, please add createViewSql", $ISourceLocation);
         }
 
-        qDebug() << typeid(Db).name();
+
         this->createQuery().exec(sql);
         if(IRdbEntityModelWare<View, Db>::m_database.getRdbViews().contains(name)){
             qDebug().noquote() << IMetaUtil::getTypeName<T>() << "CREATE VIEW: " << name;

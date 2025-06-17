@@ -2,21 +2,14 @@
 
 $PackageWebCoreBegin
 
-IRdbHavingClause::IRdbHavingClause()
-{
-}
-
-IRdbHavingClause::IRdbHavingClause(const QString &sql)
-    : m_havingSql(sql)
+IRdbHavingClause::IRdbHavingClause(const QString &sql, IRdb::Relation relation)
+    : m_havingSql(sql), m_relation(relation)
 {
 }
 
 IRdbHavingClause IRdb::having(const QString &sql, IRdb::Relation relation)
 {
-    IRdbHavingClause clause(sql);
-    clause.m_isAnd = !(relation & 0x01);
-    clause.m_isNot = !(relation & 0x10);
-    return clause;
+    return IRdbHavingClause (sql, relation);
 }
 
 $PackageWebCoreEnd

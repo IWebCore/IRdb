@@ -184,7 +184,7 @@ QString IRdbDialectWare::findColumnSql(const IRdbEntityInfo &info, const QString
 QString IRdbDialectWare::findColumnSql(const IRdbEntityInfo &info, const QStringList &columns, const IRdbCondition &condition) const
 {
     QString sql = "SELECT ";
-    sql.append(columns.join(", ")).append(" FROM ").append(quoteName(info.m_entityName)) + " " + conditionToSql(condition);
+    sql.append(columns.join(", ")).append(" FROM ").append(quoteName(info.m_entityName)).append(conditionToSql(condition));
     return sql;
 }
 
@@ -240,9 +240,9 @@ QString IRdbDialectWare::conditionToSql(const IRdbCondition & condition) const
 {
     auto sql = toWhereSql(condition);
     sql += toGroupBySql(condition);
-    sql += toHavingSql(condition);
     sql += toOrderBySql(condition);
     sql += toLimitSql(condition);
+    sql += toHavingSql(condition);
     return sql;
 }
 
@@ -259,13 +259,10 @@ QString IRdbDialectWare::toWhereSql(const IRdbCondition &condition) const
         if(condition.m_impl->m_wheres.count(i)){
             const auto& arg = condition.m_impl->m_wheres[i];
             where = fromWhereClause(arg);
-            if(arg.m_isNot){
-                where = " NOT (" + where + ")";
-            }
             isAnd = arg.m_isAnd;
         }else{
             const auto& arg = condition.m_impl->m_conditions[i];
-            where = " (" + toWhereSql(arg) + ")";
+            where = " (" + toWhereSql(arg).trimmed() + ")";
             if(arg.m_impl->m_isNot){
                 where = " NOT" + where;
             }
@@ -275,10 +272,10 @@ QString IRdbDialectWare::toWhereSql(const IRdbCondition &condition) const
         if(i == 0){
             sql = where;
         }else{
-            sql += (isAnd ? " AND " : " OR ") + where;
+            sql += (isAnd ? " AND" : " OR") + where;
         }
     }
-    return condition.m_impl->m_isChild ? sql : (" WHERE " + sql);
+    return condition.m_impl->m_isChild ? sql : (" WHERE" + sql);
 }
 
 QString IRdbDialectWare::toOrderBySql(const IRdbCondition &condition) const
@@ -301,10 +298,11 @@ QString IRdbDialectWare::toGroupBySql(const IRdbCondition &condition) const
     }
 
     QString sql = " GROUP BY";
+    QStringList groups;
     for(const auto& groupBy : condition.m_impl->m_groupBys){
-        sql += fromGroupByClause(groupBy);
+        groups.append(fromGroupByClause(groupBy));
     }
-    return sql;
+    return " GROUP BY" + groups.join(",");
 }
 
 QString IRdbDialectWare::toHavingSql(const IRdbCondition &condition) const
@@ -314,16 +312,22 @@ QString IRdbDialectWare::toHavingSql(const IRdbCondition &condition) const
     }
 
     QString sql;
+    QStringList havings;
+    if(condition.m_impl->m_havings.size() >= 1){
+        auto first = condition.m_impl->m_havings.front();
+        condition.m_impl->m_havings.pop_front();
+        havings.append(fromHavingClause(first));
+    }
+
     for(const auto& having : condition.m_impl->m_havings){
         auto clause = fromHavingClause(having);
-        if(having.m_isNot){
-            clause = " NOT (" + clause + ")";
-        }
         if(sql.isEmpty()){
-            sql += (having.m_isAnd ? " AND " : " OR ") + clause;
+            bool isAnd = ((having.m_relation == IRdb::Relation::And) ||(having.m_relation == IRdb::Relation::AndNot));
+            clause = (isAnd ? " AND" : " OR") + clause;
         }
+        havings.append(clause);
     }
-    return (condition.m_impl->m_havings.front().m_isAnd ? " having 1=1 " : " having 1<>1 ")  + sql;
+    return " HAVING" + havings.join("");
 }
 
 QString IRdbDialectWare::toLimitSql(const IRdbCondition &condition) const
@@ -331,7 +335,15 @@ QString IRdbDialectWare::toLimitSql(const IRdbCondition &condition) const
     return fromLimitClause(condition.m_impl->m_limit);
 }
 
-QString IRdbDialectWare::fromWhereClause(const IRdbWhereClause & where) const
+QString IRdbDialectWare::fromWhereClause(const IRdbWhereClause &where) const
+{
+    if(where.m_isNot){
+        return " NOT (" + fromWhereClauseImpl(where) + ")";
+    }
+    return " " + fromWhereClauseImpl(where);
+}
+
+QString IRdbDialectWare::fromWhereClauseImpl(const IRdbWhereClause & where) const
 {
     switch (where.m_type)
     {
@@ -372,7 +384,7 @@ QString IRdbDialectWare::fromWhereClause(const IRdbWhereClause & where) const
             where.m_boundValue[name] = var;
             names << name;
         }
-        return where.m_field + " IN ( " + names.join(", ") + ")";
+        return where.m_field + " IN (" + names.join(", ") + ")";
     }
     case IRdbWhereClause::Type::WhereEqual: {
         auto name = getVividName(where.m_field);
@@ -402,7 +414,7 @@ QString IRdbDialectWare::fromWhereClause(const IRdbWhereClause & where) const
     case IRdbWhereClause::Type::WhereLessEqual: {
         auto name = getVividName(where.m_field);
         where.m_boundValue[name] = where.m_variants.first();
-        return where.m_field + " = " + name;
+        return where.m_field + " <= " + name;
     }
     case IRdbWhereClause::Type::WhereIsNull: {
         return where.m_field + " IS NULL";
@@ -411,10 +423,10 @@ QString IRdbDialectWare::fromWhereClause(const IRdbWhereClause & where) const
         return where.m_field + " IS NOT NULL";
     }
     case IRdbWhereClause::Type::WhereTrue: {
-        return " 1 = 1";
+        return "1 = 1";
     }
     case IRdbWhereClause::Type::WhereFalse: {
-        return " 1 <> 1";
+        return "1 <> 1";
     }
     }
     QString tip = "where clause type does not match anything, please check";
@@ -446,6 +458,10 @@ QString IRdbDialectWare::fromGroupByClause(const IRdbGroupByClause &group) const
 
 QString IRdbDialectWare::fromHavingClause(const IRdbHavingClause &having) const
 {
+    bool isNot = (having.m_relation == IRdb::Relation::AndNot) || (having.m_relation == IRdb::Relation::OrNot);
+    if(isNot){
+        return " NOT (" + having.m_havingSql + ")";
+    }
     return " " + having.m_havingSql;
 }
 

@@ -7,7 +7,7 @@ $PackageWebCoreBegin
 struct IRdbGroupByClause
 {
 public:
-    IRdbGroupByClause();
+    IRdbGroupByClause() = default;
     IRdbGroupByClause(const QString& field);
 
 public:

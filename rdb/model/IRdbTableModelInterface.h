@@ -281,6 +281,8 @@ void IRdbTableModelInterface<T, Table, Db, enabled>::createTable()
         IRdbAbort::abortEntityCannotBeCreated("no create table sql clause exist, please add createTableSql", $ISourceLocation);
     }
 
+    qDebug() << "table created" << typeid(Table).name();
+
     this->createQuery().exec(sql);
 }
 
@@ -327,9 +329,8 @@ void IRdbTableModelInterface<T, Table, Db, enabled>::$task()
     if /*constexpr*/ (enabled){
         QString name = tableInfo().m_entityName;
         if(containsTable(name)){
-//            Db::instance().dropTable(tableInfo());
+            Db::instance().dropTable(tableInfo());
 //            qDebug().noquote() << QString::fromStdString(m_database.getClassName()) << "EXIST TABLE: " << name;
-            return;
         }
 
         createTable();

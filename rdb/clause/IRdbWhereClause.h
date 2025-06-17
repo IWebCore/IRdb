@@ -8,7 +8,6 @@ $PackageWebCoreBegin
 struct IRdbWhereClause : public IRdbClause
 {
 public:
-
     enum class Type
     {
         Where,  // sql only
@@ -37,7 +36,6 @@ public:
 
 public:
     IRdbWhereClause() = default;
-    QString getRelation() const;
 
 public:
     Type m_type;
