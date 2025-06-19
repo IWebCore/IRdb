@@ -37,7 +37,6 @@ ISqlQuery IRdbDatabaseWare::createQuery()
     throw IRdbException("fail to create query");
 }
 
-// TODO: 这里会有一个问题，就是connection可能会是死的，需要判断和处理
 IRdbConnection *IRdbDatabaseWare::lockConnection()
 {
     std::unique_lock lock(m_connectionMutex);

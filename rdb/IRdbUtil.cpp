@@ -59,7 +59,6 @@ namespace detail
         return ret;
     }
 
-    // TODO:
     QVariantMap getOneVariantMap(ISqlQuery& query, bool& ok)
     {
         QVariantMap ret;
