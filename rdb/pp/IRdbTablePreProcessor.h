@@ -22,7 +22,7 @@
     Q_CLASSINFO(PP_STRING(sql_auto_increment__##name), #name)
 
 #define $Constraint(name, value) \
-    Q_CLASSINFO(PP_STRING(sql_column_constraint__##name), #value)
+    Q_CLASSINFO(PP_STRING(sql_column_constraint__##name), value)
 
 #define $GenerateValue(name, value) \
     Q_CLASSINFO(PP_STRING(sql_generate_value__##name), #value)

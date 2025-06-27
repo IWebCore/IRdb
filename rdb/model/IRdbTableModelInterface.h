@@ -22,7 +22,7 @@ public:
 
 public:
     int insert(const QString& sql, const QVariantMap& values);
-    int insertOne(Table& table);
+    int insertOneRef(Table& table);
     int insertOne(const Table& table);
     int insertAll(const QList<Table>& tables);
 
@@ -84,14 +84,16 @@ int IRdbTableModelInterface<T, Table, Db, enabled>::insert(const QString &sql, c
 }
 
 template<typename T, typename Table, typename Db, bool enabled>
-int IRdbTableModelInterface<T, Table, Db, enabled>::insertOne(Table &table)
+int IRdbTableModelInterface<T, Table, Db, enabled>::insertOneRef(Table &table)
 {
     ISqlQuery query = this->createQuery();
     this->m_dialect.insert(query, tableInfo(), &table);
     query.exec();
 
     const auto& maker = tableInfo().m_valueMakers[tableInfo().m_primaryKey];
-    if(maker.type == IRdbTableInfo::ValueMakerType::InsertValue){
+    if(maker.type == IRdbTableInfo::ValueMakerType::InsertValue){   // TODO: 这个有点意思
+        IMetaUtil::writeProperty(tableInfo().m_fields[tableInfo().m_primaryKey].m_property, &table, query.lastInsertId());
+    }else if(maker.type == IRdbTableInfo::ValueMakerType::ReadValue){
         IMetaUtil::writeProperty(tableInfo().m_fields[tableInfo().m_primaryKey].m_property, &table, query.lastInsertId());
     }
     return query.numRowsAffected();
@@ -202,7 +204,7 @@ int IRdbTableModelInterface<T, Table, Db, enabled>::updateWhere(const QVariantMa
 template<typename T, typename Table, typename Db, bool enabled>
 int IRdbTableModelInterface<T, Table, Db, enabled>::updateById(const QVariant &id, const QVariantMap &map)
 {
-    auto condition = IRdb::whereEqual(tableInfo().m_fields[tableInfo().m_primaryKey].m_name, id);
+    IRdbCondition condition = IRdb::whereEqual(tableInfo().m_fields[tableInfo().m_primaryKey].m_name, id);
     return updateWhere(map, condition);
 }
 
@@ -329,8 +331,9 @@ void IRdbTableModelInterface<T, Table, Db, enabled>::$task()
     if /*constexpr*/ (enabled){
         QString name = tableInfo().m_entityName;
         if(containsTable(name)){
-            Db::instance().dropTable(tableInfo());
+//            Db::instance().dropTable(tableInfo());
 //            qDebug().noquote() << QString::fromStdString(m_database.getClassName()) << "EXIST TABLE: " << name;
+            return;
         }
 
         createTable();

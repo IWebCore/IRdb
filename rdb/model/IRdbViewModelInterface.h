@@ -24,12 +24,12 @@ protected:
     virtual void $task() final;
 
 protected:
-    const IRdbViewInfo& m_viewInfo;
+    const IRdbViewInfo& viewInfo();
 };
 
 template<typename T, typename View, typename Db, bool enabled>
 IRdbViewModelInterface<T, View, Db, enabled>::IRdbViewModelInterface()
-    : IRdbEntityModelWare<View, Db>(), m_viewInfo(View::staticEntityInfo())
+    : IRdbEntityModelWare<View, Db>()
 {
 }
 
@@ -49,14 +49,15 @@ template<typename T, typename View, typename Db, bool enabled>
 void  IRdbViewModelInterface<T, View, Db, enabled>::$task()
 {
     if /*constexpr*/ (enabled){
-        const auto& name = m_viewInfo.m_entityName;
+        const auto& name = viewInfo().m_entityName;
         if(IRdbEntityModelWare<View, Db>::m_database.getRdbViews().contains(name)){
-            Db::instance().dropView(m_viewInfo);
+//            Db::instance().dropView(m_viewInfo);
+            return;
         }
 
         auto sql = createViewSql();
         if(sql.isEmpty()){
-            sql = m_viewInfo.m_createViewSql;
+            sql = viewInfo().m_createViewSql;
         }
         if(sql.isEmpty()){
             IRdbAbort::abortEntityCannotBeCreated("no create view sql clause exist, please add createViewSql", $ISourceLocation);
@@ -70,6 +71,12 @@ void  IRdbViewModelInterface<T, View, Db, enabled>::$task()
             qDebug().noquote() << IMetaUtil::getTypeName<T>() << "CREATE VIEW: " << name << "FAILED";
         }
     }
+}
+
+template<typename T, typename View, typename Db, bool enabled>
+const IRdbViewInfo &IRdbViewModelInterface<T, View, Db, enabled>::viewInfo()
+{
+    return View::staticEntityInfo();
 }
 
 $PackageWebCoreEnd

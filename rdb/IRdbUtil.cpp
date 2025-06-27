@@ -5,6 +5,7 @@
 #include "rdb/ISqlQuery.h"
 #include "rdb/entity/IRdbTableInfo.h"
 #include "rdb/entity/IRdbEntityInfo.h"
+#include "rdb/entity/IRdbViewInfo.h"
 
 $PackageWebCoreBegin
 
@@ -118,6 +119,16 @@ bool IRdbUtil::isPrimaryKeyType(QMetaType::Type type)
 }
 
 void IRdbUtil::detail::toEntity(ISqlQuery &query, const IRdbTableInfo &info, void *ptr)
+{
+    auto names = ::detail::getFieldNames(query.record());
+    for(const auto& field : info.m_fields){
+        if(names.contains(field.m_name)){
+            IMetaUtil::writeProperty(field.m_property, ptr, query.value(field.m_name));
+        }
+    }
+}
+
+void IRdbUtil::detail::toEntity(ISqlQuery &query, const IRdbViewInfo &info, void *ptr)
 {
     auto names = ::detail::getFieldNames(query.record());
     for(const auto& field : info.m_fields){

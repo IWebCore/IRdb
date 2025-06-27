@@ -10,12 +10,14 @@ $PackageWebCoreBegin
 //class ISqlQuery;
 class IRdbTableInfo;
 class IRdbEntityInfo;
+class IRdbViewInfo;
 namespace IRdbUtil
 {
     namespace detail
     {
         void toBean(ISqlQuery& query, const QMetaObject& obj, void* ptr);
         void toEntity(ISqlQuery& query, const IRdbTableInfo& info, void* ptr);
+        void toEntity(ISqlQuery& query, const IRdbViewInfo& info, void* ptr);
         void toEntity(ISqlQuery& query, QList<const IRdbEntityInfo::Field*> fields, void* ptr);
     }
 
