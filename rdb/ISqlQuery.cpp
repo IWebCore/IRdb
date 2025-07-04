@@ -41,12 +41,12 @@ bool ISqlQuery::exec(const QString &sql)
     bindExecParameters();
     auto ret = QSqlQuery::exec(sql);
     if(!ret && (lastError().type() != QSqlError::NoError)){
-        qDebug().noquote() << m_dialect.databaseType() << lastQuery();
+        qDebug().noquote() << m_dialect.databaseType()+":" << lastQuery();
         qDebug().noquote() << lastError().text();
         throw IRdbException(lastError());
     }
     if(*showSql){
-        qDebug().noquote() << m_dialect.databaseType() << lastQuery();
+        qDebug().noquote() << m_dialect.databaseType()+":" << lastQuery();
         for(const QString& key : m_parameters.keys()){
             qDebug() << "bound: " << key << "->" << m_parameters[key];
         }
@@ -65,7 +65,7 @@ bool ISqlQuery::exec()
         throw IRdbException(lastError());
     }
     if(*showSql){
-        qDebug().noquote() << m_dialect.databaseType() << lastQuery() << "11";
+        qDebug().noquote() << m_dialect.databaseType()+":" << lastQuery();
         for(const QString& key : m_parameters.keys()){
             qDebug() << "bound: " << key << "->" << m_parameters[key];
         }
