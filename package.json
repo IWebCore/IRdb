@@ -6,5 +6,8 @@
     "license":"AGPL-3.0-only",
     "dependencies": {
         "ICore": "*"
-    }
+    },
+    "keywords": ["rdb", "orm", "reflection", "bean", "database"],
+    "homepage": "https://github.com/IWebCore/IRdb",
+    "changelog":"init project"
 }
