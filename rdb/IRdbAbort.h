@@ -2,6 +2,10 @@
 
 #include "core/abort/IAbortInterface.h"
 
+#if ! __has_include(<QtSql>)
+    #error "IRdb package need Qt sql module support"
+#endif
+
 $PackageWebCoreBegin
 
 class IRdbAbort : public IAbortInterface<IRdbAbort>
