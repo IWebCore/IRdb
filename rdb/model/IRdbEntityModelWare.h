@@ -27,6 +27,7 @@ public:
 
 public:
     IResult<Entity> findOne(const IRdbCondition&);
+    Entity findOneRaw(const IRdbCondition&);
     QList<Entity> findAll();
     QList<Entity> findAll(const IRdbCondition&);
     QVariantList findColumn(const QString& column);
@@ -90,6 +91,16 @@ IResult<Entity> IRdbEntityModelWare<Entity, Db>::findOne(const IRdbCondition& co
         return std::nullopt;
     }
     return IRdbUtil::getEntity<Entity>(query);
+}
+
+template<typename Entity, typename Db>
+Entity IRdbEntityModelWare<Entity, Db>::findOneRaw(const IRdbCondition & condition)
+{
+    auto val = findOne(condition);
+    if(val){
+        return *val;
+    }
+    return {};
 }
 
 template<typename Entity, typename Db>

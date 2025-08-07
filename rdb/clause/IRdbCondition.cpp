@@ -147,6 +147,86 @@ IRdbCondition &IRdbCondition::whereFalse(IRdb::Relation relation)
     return append(IRdb::whereFalse(relation));
 }
 
+IRdbCondition &IRdbCondition::like(const QString &field, const QString &argument, IRdb::Relation relation)
+{
+    return whereLike(field, argument, relation);
+}
+
+IRdbCondition &IRdbCondition::notLike(const QString &field, const QString &argument, IRdb::Relation relation)
+{
+    return whereNotLike(field, argument, relation);
+}
+
+IRdbCondition &IRdbCondition::endWith(const QString &field, const QString &argument, IRdb::Relation relation)
+{
+    return whereEndWith(field, argument, relation);
+}
+
+IRdbCondition &IRdbCondition::startWith(const QString &field, const QString &argument, IRdb::Relation relation)
+{
+    return whereStartWith(field, argument, relation);
+}
+
+IRdbCondition &IRdbCondition::between(const QString &field, const QVariant &lower, const QVariant &upper, IRdb::Relation relation)
+{
+    return whereBetween(field, lower, upper, relation);
+}
+
+IRdbCondition &IRdbCondition::in(const QString &field, const QVariantList & args, IRdb::Relation relation)
+{
+    return whereIn(field, args, relation);
+}
+
+IRdbCondition &IRdbCondition::equal(const QString &field, const QVariant &argument, IRdb::Relation relation)
+{
+    return whereEqual(field, argument, relation);
+}
+
+IRdbCondition &IRdbCondition::notEqual(const QString &field, const QVariant &argument, IRdb::Relation relation)
+{
+    return whereNotEqual(field, argument, relation);
+}
+
+IRdbCondition &IRdbCondition::greaterThan(const QString &field, const QVariant &argument, IRdb::Relation relation)
+{
+    return whereGreaterThan(field, argument, relation);
+}
+
+IRdbCondition &IRdbCondition::greaterEqual(const QString &field, const QVariant &argument, IRdb::Relation relation)
+{
+    return whereGreaterEqual(field, argument, relation);
+}
+
+IRdbCondition &IRdbCondition::lessThan(const QString &field, const QVariant &argument, IRdb::Relation relation)
+{
+    return whereLessThan(field, argument, relation);
+}
+
+IRdbCondition &IRdbCondition::lessEqual(const QString &field, const QVariant &argument, IRdb::Relation relation)
+{
+    return whereLessEqual(field, argument, relation);
+}
+
+IRdbCondition &IRdbCondition::isNull(const QString &field, IRdb::Relation relation)
+{
+    return whereIsNull(field, relation);
+}
+
+IRdbCondition &IRdbCondition::isNotNull(const QString &field, IRdb::Relation relation)
+{
+    return whereIsNotNull(field, relation);
+}
+
+IRdbCondition &IRdbCondition::True(IRdb::Relation relation)
+{
+    return whereTrue(relation);
+}
+
+IRdbCondition &IRdbCondition::False(IRdb::Relation relation)
+{
+    return whereFalse(relation);
+}
+
 IRdbCondition &IRdbCondition::whereAnd(IRdbCondition condition)
 {
     condition.m_impl->m_isAnd = true;
@@ -177,6 +257,26 @@ IRdbCondition &IRdbCondition::whereOrNot(IRdbCondition condition)
     condition.m_impl->m_isNot = true;
     append(std::move(condition));
     return *this;
+}
+
+IRdbCondition &IRdbCondition::And(IRdbCondition condition)
+{
+    return whereAnd(std::move(condition));
+}
+
+IRdbCondition &IRdbCondition::AndNot(IRdbCondition condition)
+{
+    return whereAndNot(std::move(condition));
+}
+
+IRdbCondition &IRdbCondition::Or(IRdbCondition condition)
+{
+    return whereOr(std::move(condition));
+}
+
+IRdbCondition &IRdbCondition::OrNot(IRdbCondition condition)
+{
+    return whereOrNot(std::move(condition));
 }
 
 IRdbCondition &IRdbCondition::groupBy(const QString &field)
@@ -212,6 +312,7 @@ IRdbCondition &IRdbCondition::limit(unsigned long long limit, unsigned long long
 IRdbCondition &IRdbCondition::append(IRdbCondition &&condition)
 {
     condition.m_impl->m_isChild = true;
+    condition.m_impl->m_isAnd = true;
     m_impl->m_conditions[m_whereIndex++] = std::move(condition);
     return *this;
 }
@@ -251,11 +352,19 @@ void IRdbCondition::bindParameters(ISqlQuery &query) const
     for(const auto& [index, where] : m_impl->m_wheres){
         query.bindParameters(where.m_boundValue);
     }
+    for(const auto& [index, condition] : m_impl->m_conditions){
+        condition.bindParameters(query);
+    }
     for(const auto& orderBy : m_impl->m_orderBys){
         query.bindParameters(orderBy.m_boundValue);
     }
 
     // and so on;
+}
+
+IRdbCondition IRdb::cond()
+{
+    return IRdbCondition();
 }
 
 $PackageWebCoreEnd

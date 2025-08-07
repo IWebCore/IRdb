@@ -48,11 +48,35 @@ public:
     IRdbCondition& whereTrue(IRdb::Relation = IRdb::Relation::And);
     IRdbCondition& whereFalse(IRdb::Relation = IRdb::Relation::And);
 
+//public:
+    IRdbCondition& like(const QString& field, const QString& argument, IRdb::Relation = IRdb::Relation::And);
+    IRdbCondition& notLike(const QString& field, const QString& argument, IRdb::Relation = IRdb::Relation::And);
+    IRdbCondition& endWith(const QString& field, const QString& argument, IRdb::Relation = IRdb::Relation::And);
+    IRdbCondition& startWith(const QString& field, const QString& argument, IRdb::Relation = IRdb::Relation::And);
+    IRdbCondition& between(const QString& field, const QVariant& lower, const QVariant& upper, IRdb::Relation = IRdb::Relation::And);
+    IRdbCondition& in(const QString& field, const QVariantList&, IRdb::Relation = IRdb::Relation::And);
+    IRdbCondition& equal(const QString& field, const QVariant& argument, IRdb::Relation = IRdb::Relation::And);
+    IRdbCondition& notEqual(const QString& field, const QVariant& argument, IRdb::Relation = IRdb::Relation::And);
+    IRdbCondition& greaterThan(const QString& field, const QVariant& argument, IRdb::Relation = IRdb::Relation::And);
+    IRdbCondition& greaterEqual(const QString& field, const QVariant& argument, IRdb::Relation = IRdb::Relation::And);
+    IRdbCondition& lessThan(const QString& field, const QVariant& argument, IRdb::Relation = IRdb::Relation::And);
+    IRdbCondition& lessEqual(const QString& field, const QVariant& argument, IRdb::Relation = IRdb::Relation::And);
+    IRdbCondition& isNull(const QString& field, IRdb::Relation = IRdb::Relation::And);
+    IRdbCondition& isNotNull(const QString& field, IRdb::Relation = IRdb::Relation::And);
+    IRdbCondition& True(IRdb::Relation = IRdb::Relation::And);
+    IRdbCondition& False(IRdb::Relation = IRdb::Relation::And);
+
 public:
     IRdbCondition& whereAnd(IRdbCondition condition);
     IRdbCondition& whereAndNot(IRdbCondition condition);
     IRdbCondition& whereOr(IRdbCondition condition);
     IRdbCondition& whereOrNot(IRdbCondition condition);
+
+//public:
+    IRdbCondition& And(IRdbCondition condition);
+    IRdbCondition& AndNot(IRdbCondition condition);
+    IRdbCondition& Or(IRdbCondition condition);
+    IRdbCondition& OrNot(IRdbCondition condition);
 
 public:
     IRdbCondition& groupBy(const QString& field);
@@ -86,4 +110,12 @@ private:
     std::atomic_int m_whereIndex {};
 };
 
+namespace IRdb
+{
+    IRdbCondition cond();
+}
+
 $PackageWebCoreEnd
+
+// NOTE: this maybe changed latter.
+#define $Rdb IRdbCondition()

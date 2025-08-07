@@ -31,6 +31,7 @@ public:
 
 public:
     IResult<Table> findById(const QVariant& id);
+    Table findByIdRaw(const QVariant& id);
     QList<Table> findAllByIds(const QVariantList& list);
 
 public:
@@ -134,6 +135,16 @@ IResult<Table> IRdbTableModelInterface<T, Table, Db, enabled>::findById(const QV
 {
     auto name = tableInfo().m_fields[tableInfo().m_primaryKey].m_name;
     return this->findOne(IRdb::whereEqual(name, id));
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+Table IRdbTableModelInterface<T, Table, Db, enabled>::findByIdRaw(const QVariant &id)
+{
+    auto val = findById(id);
+    if(val){
+        return *val;
+    }
+    return {};
 }
 
 template<typename T, typename Table, typename Db, bool enabled>
