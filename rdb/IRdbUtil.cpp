@@ -23,11 +23,11 @@ namespace detail
     QVariant getSingleValue(ISqlQuery& query, bool& ok)
     {
         int count = 0;
-        QVariant ret{QVariant::Invalid};
+        QVariant ret;       // this is invalid variant
         while(query.next()){
             if((count >= 1) || (query.record().count() != 1)){
                 ok = false;
-                return QVariant::Invalid;
+                return ret;
             }
             if(query.record().count() != 1){
                 throw IRdbException("query column should be only one");
@@ -37,7 +37,7 @@ namespace detail
         }
         if(count == 0){
             ok = false;
-            return QVariant::Invalid;
+            return QVariant{};
         }
         ok = true;
         return ret;
@@ -228,14 +228,14 @@ QDate IRdbUtil::getDate(ISqlQuery &query, bool& ok)
         return QDate();
     }
 
-    switch (val.type()) {
-    case QVariant::Date:
+    switch (IMetaUtil::typeId(val)) {
+    case QMetaType::QDate:
         return val.toDate();
-    case QVariant::DateTime:
+    case QMetaType::QDateTime:
         return val.toDateTime().date();
-    case QVariant::String:
+    case QMetaType::QString:
         return IConvertUtil::toDate(val.toString(), ok);
-    case QVariant::Invalid:
+    case QMetaType::UnknownType:
         return QDate();
     default:
         IRdbAbort::abortRdbUtilError("date convertion error", $ISourceLocation);
@@ -250,14 +250,14 @@ QTime IRdbUtil::getTime(ISqlQuery &query,  bool& ok)
         return {};
     }
 
-    switch (val.type()) {
-    case QVariant::Time:
+    switch (IMetaUtil::typeId(val)) {
+    case QMetaType::QTime:
         return val.toTime();
-    case QVariant::DateTime:
+    case QMetaType::QDateTime:
         return val.toDateTime().time();
-    case QVariant::String:
+    case QMetaType::QString:
         return IConvertUtil::toTime(val.toString(), ok);
-    case QVariant::Invalid:
+    case QMetaType::UnknownType:
         return QTime();
     default:
         IRdbAbort::abortRdbUtilError("time convertion error", $ISourceLocation);
@@ -271,12 +271,12 @@ QDateTime IRdbUtil::getDateTime(ISqlQuery &query, bool& ok)
     if(!ok){
         return {};
     }
-    switch (val.type()) {
-    case QVariant::DateTime:
+    switch (IMetaUtil::typeId(val)) {
+    case QMetaType::QDateTime:
         return val.toDateTime();
-    case QVariant::String:
+    case QMetaType::QString:
         return IConvertUtil::toDateTime(val.toString(), ok);
-    case QVariant::Invalid:
+    case QMetaType::UnknownType:
         return QDateTime();
     default:
         IRdbAbort::abortRdbUtilError("DateTime convertion erorr", $ISourceLocation);
@@ -500,20 +500,20 @@ QList<QDate> IRdbUtil::toDateList(const QVariantList& result)
     bool ok;
     QList<QDate> dates;
     for(const QVariant& val : result){
-        switch (val.type()) {
-        case QVariant::Date:
+        switch (IMetaUtil::typeId(val)) {
+        case QMetaType::QDate:
             dates.append(val.toDate());
             break;
-        case QVariant::DateTime:
+        case QMetaType::QDateTime:
             dates.append(val.toDateTime().date());
             break;
-        case QVariant::String:
+        case QMetaType::QString:
             dates.append(IConvertUtil::toDate(val.toString(), ok));
             if(!ok){
                 throw IRdbException("convert failed");
             }
             break;
-        case QVariant::Invalid:
+        case QMetaType::UnknownType:
             dates.append(QDate());
             break;
         default:
@@ -528,20 +528,20 @@ QList<QTime> IRdbUtil::toTimeList(const QVariantList& result)
     bool ok;
     QList<QTime> ret;
     for(const QVariant& val : result){
-        switch (val.type()) {
-        case QVariant::DateTime:
+        switch (IMetaUtil::typeId(val)) {
+        case QMetaType::Type::QDateTime:
             ret.append(val.toDateTime().time());
             break;
-        case QVariant::Time:
+        case QMetaType::Type::QTime:
             ret.append(val.toTime());
             break;
-        case QVariant::String:
+        case QMetaType::Type::QString:
             ret.append(IConvertUtil::toTime(val.toString(), ok));
             if(!ok){
                 throw IRdbException("convert failed");
             }
             break;
-        case QVariant::Invalid:
+        case QMetaType::Type::UnknownType:
             ret.append(QTime());
             break;
         default:
@@ -556,17 +556,17 @@ QList<QDateTime> IRdbUtil::toDateTimeList(const QVariantList& result)
     bool ok;
     QList<QDateTime> ret;
     for(const QVariant& val : result){
-        switch (val.type()) {
-        case QVariant::DateTime:
+        switch (IMetaUtil::typeId(val)) {
+        case QMetaType::QDateTime:
             ret.append(val.toDateTime());
             break;
-        case QVariant::String:
+        case QMetaType::QString:
             ret.append(IConvertUtil::toDateTime(val.toString(), ok));
             if(!ok){
                 throw IRdbException("convert failed");
             }
             break;
-        case QVariant::Invalid:
+        case QMetaType::UnknownType:
             ret.append(QDateTime());
             break;
         default:

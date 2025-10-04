@@ -4,6 +4,11 @@
 
 $PackageWebCoreBegin
 
+IRdbDataSource::IRdbDataSource()
+{
+
+}
+
 IRdbDataSource IRdbDataSource::fromConfig(const std::string & path)
 {
     $IJson json{path};

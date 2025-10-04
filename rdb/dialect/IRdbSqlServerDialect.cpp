@@ -43,11 +43,11 @@ QString IRdbSqlServerDialect::getSqlType(const IRdbTableInfo &info, int index) c
         {QMetaType::ULongLong, "bigint"},
         {QMetaType::Double, "float"},
         {QMetaType::Float, "real"},
-        {QVariant::Bool, "bit"},
-        {QVariant::Date, "date"},
-        {QVariant::Time, "time"},
-        {QVariant::DateTime, "datetime"},
-        {QVariant::String, "varchar(255)"},
+        {QMetaType::Bool, "bit"},
+        {QMetaType::QDate, "date"},
+        {QMetaType::QTime, "time"},
+        {QMetaType::QDateTime, "datetime"},
+        {QMetaType::QString, "varchar(255)"},
         {qMetaTypeId<std::string>(), "varchar(255)"},
         {qMetaTypeId<IString>(), "varchar(255)"},
     };
@@ -57,7 +57,7 @@ QString IRdbSqlServerDialect::getSqlType(const IRdbTableInfo &info, int index) c
 
     auto typeId = info.m_fields[index].m_typeId;
     if(!map.contains(typeId)){
-        QString tip = QString("Type is not supported. Type:").append(QVariant::typeToName(typeId));
+        QString tip = QString("Type is not supported. Type:").append(IMetaUtil::typeName(typeId));
         IRdbAbort::abortDialectError(tip, $ISourceLocation);
     }
     return map[typeId];
@@ -104,7 +104,7 @@ QString IRdbSqlServerDialect::fromLimitClause(const IRdbLimitClause &limit) cons
 
 void IRdbSqlServerDialect::bindParameter(QSqlQuery &query, const QString &field, const QVariant &value) const
 {
-    auto type = value.type();
+    auto type = IMetaUtil::typeId(value);
     if(static_cast<int>(type) >= QMetaType::User && (value.typeName() == std::string("std::string") || value.typeName() == std::string("IString"))){
         return query.bindValue(field, value.value<QString>());
     }

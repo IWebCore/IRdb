@@ -14,8 +14,8 @@ public:
 
 public:
     virtual QString createTableSql(const IRdbTableInfo& info) const override;
-    virtual QString dropTableSql(const IRdbTableInfo &info) const;
-    virtual QString getSqlType(const IRdbTableInfo &info, int index) const;
+    virtual QString dropTableSql(const IRdbTableInfo &info) const override;
+    virtual QString getSqlType(const IRdbTableInfo &info, int index) const override;
     virtual QString createSqlCommonKeyClause(const IRdbTableInfo &info, int index) const override;
 
 protected:

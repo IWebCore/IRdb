@@ -16,7 +16,7 @@ public:
     explicit ISqlQuery(IRdbConnection *connection, const IRdbDialectWare& dialect);
     ~ISqlQuery();
     ISqlQuery(ISqlQuery&& query);
-    ISqlQuery(const ISqlQuery& query);
+    ISqlQuery(const ISqlQuery& query) = delete;
     ISqlQuery& operator=(ISqlQuery&& query) = delete;
     ISqlQuery& operator=(const ISqlQuery& other) = delete; // forbid any type of copy
 

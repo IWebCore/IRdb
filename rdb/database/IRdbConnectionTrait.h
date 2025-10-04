@@ -4,7 +4,7 @@
 
 $PackageWebCoreBegin
 
-struct IRdbConnectionTrait : public IBeanInterface<IRdbConnectionTrait>
+class IRdbConnectionTrait : public IBeanInterface<IRdbConnectionTrait>
 {
     Q_GADGET
 public:

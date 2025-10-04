@@ -12,9 +12,9 @@ public:
     virtual QString databaseType() const override;
 
 public:
-    virtual QString getSqlType(const IRdbTableInfo &info, int index) const;
+    virtual QString getSqlType(const IRdbTableInfo &info, int index) const override;
     virtual QString createSqlCommonKeyClause(const IRdbTableInfo &info, int index) const final;
-    virtual QString quoteName(const QString &name) const;
+    virtual QString quoteName(const QString &name) const override;
 };
 
 $PackageWebCoreEnd

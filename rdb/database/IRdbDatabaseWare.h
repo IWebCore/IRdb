@@ -2,17 +2,18 @@
 
 #include "core/util/IHeaderUtil.h"
 #include "core/base/IHandle.h"
+#include "rdb/ISqlQuery.h"
 #include "rdb/database/IRdbDataSource.h"
 #include "rdb/database/IRdbConnectionTrait.h"
-#include "rdb/dialect/IRdbDialectWare.h"
-#include "rdb/ISqlQuery.h"
-#include <QtSql>
+#include <QSqlDatabase>
 
 $PackageWebCoreBegin
 
+class IRdbDialectWare;
 class IRdbConnection;
 class IRdbTableInfo;
 class IRdbViewInfo;
+
 class IRdbDatabaseWare
 {
     friend class IRdbConnection;
@@ -50,8 +51,8 @@ public:
     std::condition_variable m_connectionCv;
 
 public:
-    IRdbDataSource m_dataSource;
-    IRdbConnectionTrait m_connectionTrait;
+    IRdbDataSource m_dataSource{};
+    IRdbConnectionTrait m_connectionTrait{};
     IHandle m_timerId{};
 };
 

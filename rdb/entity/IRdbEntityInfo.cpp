@@ -19,9 +19,9 @@ IRdbEntityInfo::IRdbEntityInfo(const QMetaObject &meta)
         field.m_typeName = field.m_property.typeName();
         field.m_name = field.m_property.name();
         m_fieldNames.append(field.m_name);
-        field.m_typeId = QMetaType::Type(field.m_property.type());
+        field.m_typeId = QMetaType::Type(IMetaUtil::typeId(field.m_property)); // TODO:
         if(field.m_typeId == QMetaType::User){
-            field.m_typeId = QMetaType::Type(QMetaType::type(field.m_typeName.toUtf8()));
+            field.m_typeId = QMetaType::Type(IMetaUtil::typeId(field.m_typeName.toUtf8()));
             if(field.m_typeId == QMetaType::UnknownType){
                 QString tip = QString("in your field declaration, your field type is not registered, please register it. Field:").append(field.m_name);
                 IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);

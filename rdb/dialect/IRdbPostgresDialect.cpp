@@ -22,11 +22,11 @@ QString IRdbPostgresDialect::getSqlType(const IRdbTableInfo &info, int index) co
         {QMetaType::ULongLong, "bigint"},
         {QMetaType::Double, "double precision"},
         {QMetaType::Float, "real"},
-        {QVariant::Bool, "boolean"},
-        {QVariant::Date, "date"},
-        {QVariant::Time, "time"},
-        {QVariant::DateTime, "timestamp"},
-        {QVariant::String, "varchar(255)"},
+        {QMetaType::Bool, "boolean"},
+        {QMetaType::QDate, "date"},
+        {QMetaType::QTime, "time"},
+        {QMetaType::QDateTime, "timestamp"},
+        {QMetaType::QString, "varchar(255)"},
         {qMetaTypeId<std::string>(), "varchar(255)"},
         {qMetaTypeId<IString>(), "varchar(255)"},
     };
@@ -36,7 +36,7 @@ QString IRdbPostgresDialect::getSqlType(const IRdbTableInfo &info, int index) co
 
     auto typeId = info.m_fields[index].m_typeId;
     if(!map.contains(typeId)){
-        QString tip = QString("Type is not supported. Type:").append(QVariant::typeToName(typeId));
+        QString tip = QString("Type is not supported. Type:").append(IMetaUtil::typeName(typeId));
         IRdbAbort::abortDialectError(tip, $ISourceLocation);
     }
     return map[typeId];

@@ -282,7 +282,7 @@ void detail::checkFieldTypes(const QMap<QString, QString> &clsInfo, const IRdbTa
     for(const auto& field : tableInfo.m_fields){
         if(!allowTypes.contains(field.m_typeId) && !tableInfo.m_sqlType.contains(tableInfo.m_fieldNames.indexOf(field.m_name))){
             QString info = QString("this kind of type is not supported in table, please change to the supported type. \n"
-                                   "Type : ").append(QMetaType::typeName(field.m_typeId));
+                                   "Type : ").append(IMetaUtil::typeName(field.m_typeId));
             QString tip = QString("Table: ").append(tableInfo.m_className).append(" Why: ").append(info);
             IRdbAbort::abortTableDeclarationError(tip, $ISourceLocation);
         }
@@ -308,7 +308,7 @@ void detail::checkDuplicatedPrimaryKey(const QMap<QString, QString> &clsInfo, co
 
     if(typeId != QMetaType::QString && (typeId != QMetaType::LongLong) ){
         QString info = QString("primary key that is number type recommended is qlonglong/qint64 type.\n"
-                               "current is ").append(QMetaType::typeName(typeId)).append(" in class ").append(tableInfo.m_className);
+                               "current is ").append(IMetaUtil::typeName(typeId)).append(" in class ").append(tableInfo.m_className);
         qWarning() << info;
     }
 }

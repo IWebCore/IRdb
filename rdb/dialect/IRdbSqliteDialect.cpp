@@ -29,11 +29,11 @@ QString IRdbSqliteDialect::getSqlType(const IRdbTableInfo& info, int index) cons
         {QMetaType::ULongLong, "INTEGER"},
         {QMetaType::Double, "REAL"},
         {QMetaType::Float, "REAL"},
-        {QVariant::Bool, "BOOLEAN"},
-        {QVariant::Date, "DATE"},
-        {QVariant::Time, "TIME"},
-        {QVariant::DateTime, "DATETIME"},
-        {QVariant::String, "VARCHAR"},
+        {QMetaType::Bool, "BOOLEAN"},
+        {QMetaType::QDate, "DATE"},
+        {QMetaType::QTime, "TIME"},
+        {QMetaType::QDateTime, "DATETIME"},
+        {QMetaType::QString, "VARCHAR"},
         {qMetaTypeId<std::string>(), "VARCHAR"},
         {qMetaTypeId<IString>(), "VARCHAR"},
     };
@@ -43,7 +43,7 @@ QString IRdbSqliteDialect::getSqlType(const IRdbTableInfo& info, int index) cons
 
     auto typeId = info.m_fields[index].m_typeId;
     if(!map.contains(typeId)){
-        QString tip = QString("Type is not supported. Type:").append(QVariant::typeToName(typeId));
+        QString tip = QString("Type is not supported. Type:").append(IMetaUtil::typeName(typeId));
         IRdbAbort::abortDialectError(tip, $ISourceLocation);
     }
     return map[typeId];

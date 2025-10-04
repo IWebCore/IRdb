@@ -1,9 +1,12 @@
 ﻿#include "IRdbDatabaseWare.h"
-#include "core/application/IAsioContext.h"
+#include "core/application/IApplicationManage.h"
 #include "rdb/exception/IRdbException.h"
 #include "rdb/entity/IRdbTableInfo.h"
 #include "rdb/entity/IRdbViewInfo.h"
+#include "rdb/dialect/IRdbDialectWare.h"
+#include "rdb/database/IRdbDataSource.h"
 #include "rdb/database/IRdbConnection.h"
+#include "rdb/database/IRdbConnectionTrait.h"
 
 $PackageWebCoreBegin
 
@@ -15,7 +18,7 @@ IRdbDatabaseWare::IRdbDatabaseWare(const IRdbDialectWare & dialect)
 IRdbDatabaseWare::~IRdbDatabaseWare()
 {
     if(m_timerId){
-        IAsioContext::instance().stopTimer(m_timerId);
+        IApplicationManage::instance().stopTimer(m_timerId);
         m_timerId = 0;
     }
 
@@ -37,6 +40,7 @@ ISqlQuery IRdbDatabaseWare::createQuery()
     throw IRdbException("fail to create query");
 }
 
+
 IRdbConnection *IRdbDatabaseWare::lockConnection()
 {
     std::unique_lock lock(m_connectionMutex);
@@ -52,8 +56,8 @@ IRdbConnection *IRdbDatabaseWare::lockConnection()
     }
 
     if(m_connectionCv.wait_for(lock, std::chrono::seconds(m_connectionTrait.connectionTimeout), [&](){
-        return !m_connections.empty();
-    })){
+            return !m_connections.empty();
+        })){
         auto front = m_connections.front();
         m_connections.pop_front();
         return front;
@@ -67,6 +71,7 @@ void IRdbDatabaseWare::unlockConnection(IRdbConnection *db)
     m_connections.push_back(db);
     m_connectionCv.notify_one();
 }
+
 
 QStringList IRdbDatabaseWare::getRdbTables()
 {
@@ -137,7 +142,7 @@ void IRdbDatabaseWare::timerTask()
         return; // 创建 connection
     }
 
-    for(int index=m_connections.size() -1; index > m_connectionTrait.minConnection; index--){
+    for(int index=static_cast<int>(m_connections.size()) -1; index > m_connectionTrait.minConnection; index--){
         auto connection = *(std::next(m_connections.begin(), index));
         if(connection->isExpired(m_connectionTrait.idleTimeout)){
             m_connections.remove(connection);
@@ -148,14 +153,16 @@ void IRdbDatabaseWare::timerTask()
 
 void IRdbDatabaseWare::createWatchTimer()
 {
-    m_timerId = IAsioContext::startTimer(std::chrono::seconds(m_connectionTrait.timerDuration), [=](){
-        try{
-            timerTask();
-        }catch(const IRdbException& exception){
-            qWarning() << exception.getCause();
+    m_timerId = IApplicationManage::instance().startTimer(
+        std::chrono::seconds(m_connectionTrait.timerDuration),
+        [=](){
+            try{
+                timerTask();
+            }catch(const IRdbException& exception){
+                qWarning() << exception.getCause();
+            }
         }
-    });
+        );
 }
-
 
 $PackageWebCoreEnd

@@ -21,14 +21,7 @@ ISqlQuery::~ISqlQuery()
 }
 
 ISqlQuery::ISqlQuery(ISqlQuery &&query)
-    : QSqlQuery(static_cast<QSqlQuery&&>(query)), m_dialect(query.m_dialect), m_parameters(std::move(query.m_parameters))
-{
-    m_connection = query.m_connection;
-    query.m_connection = nullptr;
-}
-
-ISqlQuery::ISqlQuery(const ISqlQuery &query)
-    : QSqlQuery(static_cast<const QSqlQuery& >(query)), m_dialect(query.m_dialect), m_parameters(std::move(query.m_parameters))
+    : QSqlQuery(std::move(query)), m_dialect(query.m_dialect), m_parameters(std::move(query.m_parameters))
 {
     m_connection = query.m_connection;
     query.m_connection = nullptr;

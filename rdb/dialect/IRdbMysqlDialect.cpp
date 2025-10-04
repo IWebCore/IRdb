@@ -25,11 +25,11 @@ QString IRdbMysqlDialect::getSqlType(const IRdbTableInfo &info, int index) const
         {QMetaType::ULongLong, "BIGINT UNSIGNED"},
         {QMetaType::Double, "DOUBLE"},
         {QMetaType::Float, "FLOAT"},
-        {QVariant::Bool, "TINYINT(1)"},
-        {QVariant::Date, "DATE"},
-        {QVariant::Time, "TIME"},
-        {QVariant::DateTime, "DATETIME"},
-        {QVariant::String, "VARCHAR(255)"},
+        {QMetaType::Bool, "TINYINT(1)"},
+        {QMetaType::QDate, "DATE"},
+        {QMetaType::QTime, "TIME"},
+        {QMetaType::QDateTime, "DATETIME"},
+        {QMetaType::QString, "VARCHAR(255)"},
         {qMetaTypeId<std::string>(), "VARCHAR(255)"},
         {qMetaTypeId<IString>(), "VARCHAR(255)"},
     };
@@ -39,7 +39,7 @@ QString IRdbMysqlDialect::getSqlType(const IRdbTableInfo &info, int index) const
 
     auto typeId = info.m_fields[index].m_typeId;
     if(!map.contains(typeId)){
-        QString tip = QString("Type is not supported. Type:").append(QVariant::typeToName(typeId));
+        QString tip = QString("Type is not supported. Type:").append(IMetaUtil::typeName(typeId));
         IRdbAbort::abortDialectError(tip, $ISourceLocation);
     }
     return map[typeId];

@@ -5,10 +5,11 @@
 
 $PackageWebCoreBegin
 
-struct IRdbDataSource : public IBeanInterface<IRdbDataSource>
+class IRdbDataSource : public IBeanInterface<IRdbDataSource>
 {
     Q_GADGET
 public:
+    IRdbDataSource();
     static IRdbDataSource fromConfig(const std::string&);
 
 public:
