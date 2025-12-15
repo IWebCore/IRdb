@@ -23,7 +23,7 @@ private:
 template<typename T, bool enabled>
 void IRdbValueGeneratorInterface<T, enabled>::$task()
 {
-    if (enabled){
+    if constexpr (enabled){
         IRdbManage::instance().regiterAutoGenerateKeyFunction(name(),
             std::bind(&IRdbValueGeneratorInterface::generator, &ISolo<T>()));
     }

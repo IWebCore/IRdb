@@ -1,10 +1,9 @@
 ﻿#include "IRdbDatabaseWare.h"
-#include "core/application/IApplicationManage.h"
+#include "core/application/iApp.h"
 #include "rdb/exception/IRdbException.h"
 #include "rdb/entity/IRdbTableInfo.h"
 #include "rdb/entity/IRdbViewInfo.h"
 #include "rdb/dialect/IRdbDialectWare.h"
-#include "rdb/database/IRdbDataSource.h"
 #include "rdb/database/IRdbConnection.h"
 #include "rdb/database/IRdbConnectionTrait.h"
 
@@ -18,7 +17,7 @@ IRdbDatabaseWare::IRdbDatabaseWare(const IRdbDialectWare & dialect)
 IRdbDatabaseWare::~IRdbDatabaseWare()
 {
     if(m_timerId){
-        IApplicationManage::instance().stopTimer(m_timerId);
+        iApp->stopTimer(m_timerId);
         m_timerId = 0;
     }
 
@@ -153,8 +152,7 @@ void IRdbDatabaseWare::timerTask()
 
 void IRdbDatabaseWare::createWatchTimer()
 {
-    m_timerId = IApplicationManage::instance().startTimer(
-        std::chrono::seconds(m_connectionTrait.timerDuration),
+    m_timerId = iApp->startTimer( std::chrono::seconds(m_connectionTrait.timerDuration),
         [=](){
             try{
                 timerTask();
@@ -162,7 +160,7 @@ void IRdbDatabaseWare::createWatchTimer()
                 qWarning() << exception.getCause();
             }
         }
-        );
+    );
 }
 
 $PackageWebCoreEnd
