@@ -35,13 +35,16 @@ HEADERS += \
     $$PWD/rdb/entity/IRdbEntityInfo.h \
     $$PWD/rdb/entity/IRdbTableInfo.h \
     $$PWD/rdb/entity/IRdbTableInterface.h \
+    $$PWD/rdb/entity/IRdbTableInterface_flatten.h \
     $$PWD/rdb/entity/IRdbValueGeneratorInterface.h \
     $$PWD/rdb/entity/IRdbViewInfo.h \
     $$PWD/rdb/entity/IRdbViewInterface.h \
+    $$PWD/rdb/entity/IRdbViewInterface_flatten.h \
     $$PWD/rdb/exception/IRdbException.h \
     $$PWD/rdb/impl/IRdbUuidValueGenerator.h \
     $$PWD/rdb/model/IRdbEntityModelWare.h \
     $$PWD/rdb/model/IRdbTableModelInterface.h \
+    $$PWD/rdb/model/IRdbTableModelInterface_flatten.h \
     $$PWD/rdb/model/IRdbViewModelInterface.h \
     $$PWD/rdb/pp/IRdbPreProcessor.h \
     $$PWD/rdb/pp/IRdbTablePreProcessor.h \

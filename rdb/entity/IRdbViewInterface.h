@@ -1,5 +1,11 @@
 ﻿#pragma once
 
+#ifdef IWEBCORE_FLATTEN_CRTP
+
+#include "IRdbViewInterface_flatten.h"
+
+#else
+
 #include "core/util/IHeaderUtil.h"
 #include "core/bean/IBeanInterface.h"
 #include "rdb/entity/IRdbViewInfo.h"
@@ -25,3 +31,5 @@ const IRdbViewInfo &IRdbViewInterface<T, enabled, trait>::staticEntityInfo()
 }
 
 $PackageWebCoreEnd
+
+#endif

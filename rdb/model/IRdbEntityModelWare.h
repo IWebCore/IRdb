@@ -201,7 +201,7 @@ ISqlQuery IRdbEntityModelWare<Entity, Db>::createQuery(const QString& sql, const
 }
 
 template<typename Entity, typename Db>
-inline const IRdbEntityInfo &IRdbEntityModelWare<Entity, Db>::entityInfo() const
+const IRdbEntityInfo &IRdbEntityModelWare<Entity, Db>::entityInfo() const
 {
     return Entity::staticEntityInfo();
 }

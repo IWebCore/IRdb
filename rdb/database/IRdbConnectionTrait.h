@@ -23,4 +23,6 @@ public:
     $BeanField(int, idleTimeout, 600) // 12min
 };
 
+extern template class IBeanInterface<IRdbConnectionTrait>;
+
 $PackageWebCoreEnd

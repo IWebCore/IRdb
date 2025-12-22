@@ -48,7 +48,7 @@ double IRdbViewModelInterface<T, View, Db, enabled>::$order() const
 template<typename T, typename View, typename Db, bool enabled>
 void  IRdbViewModelInterface<T, View, Db, enabled>::$task()
 {
-    if /*constexpr*/ (enabled){
+    if constexpr (enabled){
         const auto& name = viewInfo().m_entityName;
         if(IRdbEntityModelWare<View, Db>::m_database.getRdbViews().contains(name)){
 //            Db::instance().dropView(m_viewInfo);

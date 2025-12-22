@@ -4,6 +4,8 @@
 
 $PackageWebCoreBegin
 
+template class IBeanInterface<IRdbConnectionTrait>;
+
 IRdbConnectionTrait IRdbConnectionTrait::fromConfig(const std::string &path)
 {
     $IJson json(path);

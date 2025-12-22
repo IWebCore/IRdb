@@ -2,10 +2,6 @@
 
 #ifdef IWEBCORE_FLATTEN_CRTP
 
-#include "IRdbTableModelInterface_flatten.h"
-
-#else
-
 #include "core/util/IHeaderUtil.h"
 #include "core/task/unit/ITaskWareUnit.h"
 #include "core/base/IResult.h"
@@ -20,12 +16,49 @@
 $PackageWebCoreBegin
 
 template<typename T, typename Table, typename Db, bool enabled = true>
-class IRdbTableModelInterface
-    : public IRdbEntityModelWare<Table, Db>, public ITaskWareUnit<T, IRdbCatagory, enabled>
+class IRdbTableModelInterface : public ITaskWare
 {
+    $AsTaskUnit(IRdbTableModelInterface)
+    Q_DISABLE_COPY_MOVE(IRdbTableModelInterface)
 public:
     IRdbTableModelInterface();
 
+// taskware
+protected:
+    virtual const std::string& $name() const final;
+    virtual const std::string& $catagory() const final;
+
+// Entity model ware
+public:
+    std::size_t count();
+    std::size_t count(const IRdbCondition&);
+
+public:
+    IResult<Table> findOne(const IRdbCondition&);
+    Table findOneRaw(const IRdbCondition&);
+    QList<Table> findAll();
+    QList<Table> findAll(const IRdbCondition&);
+    QVariantList findColumn(const QString& column);
+    QVariantList findColumn(const QString& column, const IRdbCondition& condition);
+    QList<QVariantMap> findColumns(const QStringList& columns);
+    QList<QVariantMap> findColumns(const QStringList& columns, const IRdbCondition& condition);
+
+public:
+    bool exist(const IRdbCondition& condition);
+
+public:
+    ISqlQuery createQuery();
+    ISqlQuery createQuery(const QString& sql);
+    ISqlQuery createQuery(const QString& sql, const QVariantMap& values);
+
+protected:
+    const IRdbEntityInfo& entityInfo() const;
+
+protected:
+    IRdbDatabaseWare& m_database;
+    const IRdbDialectWare& m_dialect;
+
+// table interface
 public:
     int insert(const QString& sql, const QVariantMap& values);
     int insertOneRef(Table& table);
@@ -77,8 +110,174 @@ protected:
     virtual void $task() final;
 };
 
+
+template<typename T, typename Table, typename Db, bool enabled>
+const std::string& IRdbTableModelInterface<T, Table, Db, enabled>::$name() const
+{
+    static const std::string name = IMetaUtil::getBareTypeName<T>();
+    return name;
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+const std::string& IRdbTableModelInterface<T, Table, Db, enabled>::$catagory() const
+{
+    static const std::string name = IMetaUtil::getBareTypeName<IRdbCatagory>();
+    return name;
+}
+
+
+template<typename T, typename Table, typename Db, bool enabled>
+std::size_t IRdbTableModelInterface<T, Table, Db, enabled>::count()
+{
+    auto query = createQuery(m_dialect.countSql(entityInfo()));
+    query.exec();
+    bool ok = true;
+    auto value = IRdbUtil::getLongLong(query, ok);
+    return ok ? value : 0;
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+std::size_t IRdbTableModelInterface<T, Table, Db, enabled>::count(const IRdbCondition & condition)
+{
+    auto query = createQuery(m_dialect.countSql(entityInfo(), condition));
+    condition.bindParameters(query);
+    query.exec();
+    bool ok = true;
+    auto value = IRdbUtil::getLongLong(query, ok);
+    return ok ? value : 0;
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+IResult<Table> IRdbTableModelInterface<T, Table, Db, enabled>::findOne(const IRdbCondition& condition)
+{
+    auto sql =m_dialect.findOneSql(entityInfo(), condition);
+    auto query = createQuery(sql);
+    condition.bindParameters(query);
+    if(!query.exec()){
+        if(query.lastError().type() != QSqlError::NoError){
+            throw IRdbException(query.lastError());
+        }
+        return std::nullopt;
+    }
+    return IRdbUtil::getEntity<Table>(query);
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+Table IRdbTableModelInterface<T, Table, Db, enabled>::findOneRaw(const IRdbCondition & condition)
+{
+    auto val = findOne(condition);
+    if(val){
+        return *val;
+    }
+    return {};
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+QList<Table> IRdbTableModelInterface<T, Table, Db, enabled>::findAll()
+{
+    auto query = createQuery(m_dialect.findAllSql(entityInfo()));
+    query.exec();
+    return IRdbUtil::getEntities<Table>(query);
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+QList<Table> IRdbTableModelInterface<T, Table, Db, enabled>::findAll(const IRdbCondition& condition)
+{
+    auto query = createQuery(m_dialect.findAllSql(entityInfo(), condition));
+    condition.bindParameters(query);
+    query.exec();
+    return IRdbUtil::getEntities<Table>(query);
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+QVariantList IRdbTableModelInterface<T, Table, Db, enabled>::findColumn(const QString& column)
+{
+    auto query = createQuery(m_dialect.findColumnSql(entityInfo(), {column}));
+    if(!query.exec()){
+        return {};
+    }
+    return IRdbUtil::getVariantList(query);
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+QVariantList IRdbTableModelInterface<T, Table, Db, enabled>::findColumn(const QString &column, const IRdbCondition &condition)
+{
+    auto query = createQuery(m_dialect.findColumnSql(entityInfo(), {column}, condition));
+    condition.bindParameters(query);
+    if(!query.exec()){
+        return {};
+    }
+    return IRdbUtil::getVariantList(query);
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+QList<QVariantMap> IRdbTableModelInterface<T, Table, Db, enabled>::findColumns(const QStringList& columns)
+{
+    auto query = createQuery(m_dialect.findColumnSql(entityInfo(), columns));
+    if(!query.exec()){
+        return {};
+    }
+    return IRdbUtil::getVariantMapList(query);
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+QList<QVariantMap> IRdbTableModelInterface<T, Table, Db, enabled>::findColumns(const QStringList& columns, const IRdbCondition& condition)
+{
+    auto query = createQuery(m_dialect.findColumnSql(entityInfo(), columns, condition));
+    condition.bindParameters(query);
+    if(!query.exec()){
+        return {};
+    }
+    return IRdbUtil::getVariantMapList(query);
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+bool IRdbTableModelInterface<T, Table, Db, enabled>::exist(const IRdbCondition &condition)
+{
+    auto query = createQuery(m_dialect.existSql(entityInfo(), condition));
+    condition.bindParameters(query);
+    if(!query.exec()){
+        return false;
+    }
+    auto value = IRdbUtil::getBool(query);
+    if(value){
+        return *value;
+    }
+    return false;
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+ISqlQuery IRdbTableModelInterface<T, Table, Db, enabled>::createQuery()
+{
+    return m_database.createQuery();
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+ISqlQuery IRdbTableModelInterface<T, Table, Db, enabled>::createQuery(const QString &sql)
+{
+    auto query = m_database.createQuery();
+    query.prepare(sql);
+    return query;
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+ISqlQuery IRdbTableModelInterface<T, Table, Db, enabled>::createQuery(const QString& sql, const QVariantMap& values)
+{
+    auto query = m_database.createQuery();
+    query.prepare(sql);
+    query.bindParameters(values);
+    return query;
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+const IRdbEntityInfo &IRdbTableModelInterface<T, Table, Db, enabled>::entityInfo() const
+{
+    return Table::staticEntityInfo();
+}
+
 template<typename T, typename Table, typename Db, bool enabled>
 IRdbTableModelInterface<T, Table, Db, enabled>::IRdbTableModelInterface()
+    : m_database(Db::instance()), m_dialect(Db::DialectType::instance())
 {
 }
 
@@ -359,6 +558,21 @@ void IRdbTableModelInterface<T, Table, Db, enabled>::$task()
         }else{
             qDebug().noquote() << IMetaUtil::getTypeName<T>() << "CREATE TABLE: " << name << "FAILED";
         }
+    }
+}
+
+template<typename T, typename Table, typename Db, bool enabled>
+typename IRdbTableModelInterface<T, Table, Db, enabled>::IRdbTableModelInterfaceInitPrivate
+    IRdbTableModelInterface<T, Table, Db, enabled>::m_private;
+
+template<typename T, typename Table, typename Db, bool enabled>
+IRdbTableModelInterface<T, Table, Db, enabled>::IRdbTableModelInterfaceInitPrivate::IRdbTableModelInterfaceInitPrivate()
+{
+    if constexpr (enabled){
+        static std::once_flag flag;
+        std::call_once(flag, [](){
+            ITaskManage::instance().addTaskWare(&ISolo<T>());
+        });
     }
 }
 
