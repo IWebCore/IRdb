@@ -58,7 +58,7 @@ protected:
     IRdbDatabaseWare& m_database;
     const IRdbDialectWare& m_dialect;
 
-// table interface
+// table model interface
 public:
     int insert(const QString& sql, const QVariantMap& values);
     int insertOneRef(Table& table);
@@ -110,7 +110,6 @@ protected:
     virtual void $task() final;
 };
 
-
 template<typename T, typename Table, typename Db, bool enabled>
 const std::string& IRdbTableModelInterface<T, Table, Db, enabled>::$name() const
 {
@@ -124,7 +123,6 @@ const std::string& IRdbTableModelInterface<T, Table, Db, enabled>::$catagory() c
     static const std::string name = IMetaUtil::getBareTypeName<IRdbCatagory>();
     return name;
 }
-
 
 template<typename T, typename Table, typename Db, bool enabled>
 std::size_t IRdbTableModelInterface<T, Table, Db, enabled>::count()
@@ -575,7 +573,6 @@ IRdbTableModelInterface<T, Table, Db, enabled>::IRdbTableModelInterfaceInitPriva
         });
     }
 }
-
 
 $PackageWebCoreEnd
 

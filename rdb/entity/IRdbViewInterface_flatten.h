@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#ifdef IWEBCORE_FLATTEN_CRTP
+
 #include "core/util/IHeaderUtil.h"
 #include "core/bean/IBeanInterface.h"
 #include "rdb/entity/IRdbViewInfo.h"
@@ -9,18 +11,17 @@
 $PackageWebCoreBegin
 
 template<typename T, bool enabled = true, IBeanTrait trait = IBeanTrait::Tolerance>
-class IRdbViewInterface : public IBeanInterface<T, enabled, trait>
+class IRdbViewInterface //: public IBeanInterface<T, enabled, trait>
 {
     $AsTaskUnit(IRdbViewInterface)
 public:
     IRdbViewInterface() = default;
 
 public:
-    void $task() ;
+    void $task();
 
 public:
     static const IRdbViewInfo& staticEntityInfo();
-
 
 public:
     virtual IJson toJson() const;
@@ -40,7 +41,6 @@ private:
     static void registQStringStdMap();
     static void registStdStringStdMap();
     static void registIStringStdMap();
-
 };
 
 template<typename T, bool enabled, IBeanTrait trait>
@@ -49,8 +49,6 @@ const IRdbViewInfo &IRdbViewInterface<T, enabled, trait>::staticEntityInfo()
     static IRdbViewInfo s_info(T::staticMetaObject);
     return s_info;
 }
-
-
 
 template<typename T, bool enabled, IBeanTrait trait>
 IJson IRdbViewInterface<T, enabled, trait>::toJson() const
@@ -288,3 +286,5 @@ IRdbViewInterface<T, enabled, trait>::IRdbViewInterfaceInitPrivate::IRdbViewInte
 
 
 $PackageWebCoreEnd
+
+#endif

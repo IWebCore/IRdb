@@ -46,6 +46,7 @@ HEADERS += \
     $$PWD/rdb/model/IRdbTableModelInterface.h \
     $$PWD/rdb/model/IRdbTableModelInterface_flatten.h \
     $$PWD/rdb/model/IRdbViewModelInterface.h \
+    $$PWD/rdb/model/IRdbViewModelInterface_flatten.h \
     $$PWD/rdb/pp/IRdbPreProcessor.h \
     $$PWD/rdb/pp/IRdbTablePreProcessor.h \
     $$PWD/rdb/pp/IRdbViewPreProcessor.h

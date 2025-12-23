@@ -1,5 +1,11 @@
 ﻿#pragma once
 
+#ifdef IWEBCORE_FLATTEN_CRTP
+
+#include "IRdbViewModelInterface_flatten.h"
+
+#else
+
 #include "core/util/IHeaderUtil.h"
 #include "core/task/unit/ITaskWareUnit.h"
 #include "rdb/IRdbAbort.h"
@@ -80,3 +86,5 @@ const IRdbViewInfo &IRdbViewModelInterface<T, View, Db, enabled>::viewInfo()
 }
 
 $PackageWebCoreEnd
+
+#endif

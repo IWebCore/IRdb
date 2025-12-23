@@ -11,14 +11,14 @@
 $PackageWebCoreBegin
 
 template<typename T, bool enabled=true, IBeanTrait trait = IBeanTrait::Tolerance>
-class IRdbTableInterface // : public IRdbTableInterface<T, enabled, trait>
+class IRdbTableInterface // : public IBeanInterface<T, enabled, trait>
 {
     $AsTaskUnit(IRdbTableInterface)
 public:
     IRdbTableInterface() = default;
 
 public:
-    void $task() ;
+    void $task();
 
 public:
     static const IRdbTableInfo& staticEntityInfo();
