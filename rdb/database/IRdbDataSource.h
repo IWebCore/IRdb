@@ -33,4 +33,7 @@ public:
     int port{-1};
 };
 
+extern template class IBeanInterface<IRdbDataSource>;
+
 $PackageWebCoreEnd
+

@@ -47,20 +47,27 @@ void IRdbSqliteDatabaseInterface<T, enabled>::$task()
 {
     if constexpr (enabled) {
         static std::once_flag flag;
-        std::call_once(flag, [](){
-            IRdbDatabaseInterface<T, IRdbSqliteDialect, enabled>& ware = T::instance();
-            ware.m_dataSource = ware.getDataSource();
-            ware.m_connectionTrait = ware.getConnectionTrait();
-            if(!QSqlDatabase::drivers().contains(ware.m_dataSource.driverName)){
-                QString tip = QString("sql driver not exist, DriverName: ").append(ware.m_dataSource.driverName);
-                IRdbAbort::abortDataSourceError(tip, $ISourceLocation);
-            }
+        std::call_once(flag, [=](){
 
-            const auto& trait = ware.m_connectionTrait;
-            for(int index=0; index< trait.minConnection; index++){
-                ware.m_connections.push_back(ware.createConnection());
-            }
-            ware.createWatchTimer();
+            // IRdbDatabaseInterface<T, IRdbSqliteDialect, enabled>& ware = T::instance();
+            // ware.m_dataSource = ware.getDataSource();
+            // ware.m_connectionTrait = ware.getConnectionTrait();
+            std::thread thread([=](){
+                this->m_dataSource = this->getDataSource();
+                this->m_connectionTrait = this->getConnectionTrait();
+                if(!QSqlDatabase::drivers().contains(this->m_dataSource.driverName)){
+                    QString tip = QString("sql driver not exist, DriverName: ").append(/*ware.*/this->m_dataSource.driverName);
+                    IRdbAbort::abortDataSourceError(tip, $ISourceLocation);
+                }
+
+                // const auto& trait = /*ware.*/m_connectionTrait;
+                for(int index=0; index< this->m_connectionTrait.minConnection; index++){
+                    /*ware.*/this->m_connections.push_back(/*ware.*/this->createConnection());
+                }
+                // /*ware.*/this->createWatchTimer();
+
+            });
+            thread.join();
         });
     }
 }

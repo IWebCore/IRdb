@@ -9,6 +9,7 @@
 
 $PackageWebCoreBegin
 
+// TODO: 所有的 DataBase 都要做 flatten, 防止编译问题。
 template<typename T, typename Dialect, bool enabled = true>
 class IRdbDatabaseInterface
     : public IRdbDatabaseWare, public ITaskWareUnit<T, IRdbCatagory>, public ISoloUnit<T>

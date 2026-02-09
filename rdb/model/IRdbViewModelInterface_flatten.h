@@ -13,7 +13,6 @@ $PackageWebCoreBegin
 
 template<typename T, typename View, typename Db, bool enabled = true>
 class IRdbViewModelInterface : public ITaskWare
-    // : public IRdbEntityModelWare<View, Db>, public ITaskWareUnit<T, IRdbCatagory, enabled>
 {
     $AsTaskUnit(IRdbViewModelInterface)
     Q_DISABLE_COPY_MOVE(IRdbViewModelInterface)
@@ -31,10 +30,10 @@ public:
     std::size_t count(const IRdbCondition&);
 
 public:
-    IResult<Table> findOne(const IRdbCondition&);
-    Table findOneRaw(const IRdbCondition&);
-    QList<Table> findAll();
-    QList<Table> findAll(const IRdbCondition&);
+    IResult<View> findOne(const IRdbCondition&);
+    View findOneRaw(const IRdbCondition&);
+    QList<View> findAll();
+    QList<View> findAll(const IRdbCondition&);
     QVariantList findColumn(const QString& column);
     QVariantList findColumn(const QString& column, const IRdbCondition& condition);
     QList<QVariantMap> findColumns(const QStringList& columns);
@@ -67,15 +66,15 @@ protected:
     const IRdbViewInfo& viewInfo();
 };
 
-template<typename T, typename Table, typename Db, bool enabled>
-const std::string& IRdbViewModelInterface<T, Table, Db, enabled>::$name() const
+template<typename T, typename View, typename Db, bool enabled>
+const std::string& IRdbViewModelInterface<T, View, Db, enabled>::$name() const
 {
     static const std::string name = IMetaUtil::getBareTypeName<T>();
     return name;
 }
 
-template<typename T, typename Table, typename Db, bool enabled>
-const std::string& IRdbViewModelInterface<T, Table, Db, enabled>::$catagory() const
+template<typename T, typename View, typename Db, bool enabled>
+const std::string& IRdbViewModelInterface<T, View, Db, enabled>::$catagory() const
 {
     static const std::string name = IMetaUtil::getBareTypeName<IRdbCatagory>();
     return name;
@@ -89,8 +88,8 @@ IRdbViewModelInterface<T, View, Db, enabled>::IRdbViewModelInterface()
 }
 
 
-template<typename T, typename Table, typename Db, bool enabled>
-std::size_t IRdbViewModelInterface<T, Table, Db, enabled>::count()
+template<typename T, typename View, typename Db, bool enabled>
+std::size_t IRdbViewModelInterface<T, View, Db, enabled>::count()
 {
     auto query = createQuery(m_dialect.countSql(entityInfo()));
     query.exec();
@@ -99,8 +98,8 @@ std::size_t IRdbViewModelInterface<T, Table, Db, enabled>::count()
     return ok ? value : 0;
 }
 
-template<typename T, typename Table, typename Db, bool enabled>
-std::size_t IRdbViewModelInterface<T, Table, Db, enabled>::count(const IRdbCondition & condition)
+template<typename T, typename View, typename Db, bool enabled>
+std::size_t IRdbViewModelInterface<T, View, Db, enabled>::count(const IRdbCondition & condition)
 {
     auto query = createQuery(m_dialect.countSql(entityInfo(), condition));
     condition.bindParameters(query);
@@ -110,8 +109,8 @@ std::size_t IRdbViewModelInterface<T, Table, Db, enabled>::count(const IRdbCondi
     return ok ? value : 0;
 }
 
-template<typename T, typename Table, typename Db, bool enabled>
-IResult<Table> IRdbViewModelInterface<T, Table, Db, enabled>::findOne(const IRdbCondition& condition)
+template<typename T, typename View, typename Db, bool enabled>
+IResult<View> IRdbViewModelInterface<T, View, Db, enabled>::findOne(const IRdbCondition& condition)
 {
     auto sql =m_dialect.findOneSql(entityInfo(), condition);
     auto query = createQuery(sql);
@@ -122,11 +121,11 @@ IResult<Table> IRdbViewModelInterface<T, Table, Db, enabled>::findOne(const IRdb
         }
         return std::nullopt;
     }
-    return IRdbUtil::getEntity<Table>(query);
+    return IRdbUtil::getEntity<View>(query);
 }
 
-template<typename T, typename Table, typename Db, bool enabled>
-Table IRdbViewModelInterface<T, Table, Db, enabled>::findOneRaw(const IRdbCondition & condition)
+template<typename T, typename View, typename Db, bool enabled>
+View IRdbViewModelInterface<T, View, Db, enabled>::findOneRaw(const IRdbCondition & condition)
 {
     auto val = findOne(condition);
     if(val){
@@ -135,25 +134,25 @@ Table IRdbViewModelInterface<T, Table, Db, enabled>::findOneRaw(const IRdbCondit
     return {};
 }
 
-template<typename T, typename Table, typename Db, bool enabled>
-QList<Table> IRdbViewModelInterface<T, Table, Db, enabled>::findAll()
+template<typename T, typename View, typename Db, bool enabled>
+QList<View> IRdbViewModelInterface<T, View, Db, enabled>::findAll()
 {
     auto query = createQuery(m_dialect.findAllSql(entityInfo()));
     query.exec();
-    return IRdbUtil::getEntities<Table>(query);
+    return IRdbUtil::getEntities<View>(query);
 }
 
-template<typename T, typename Table, typename Db, bool enabled>
-QList<Table> IRdbViewModelInterface<T, Table, Db, enabled>::findAll(const IRdbCondition& condition)
+template<typename T, typename View, typename Db, bool enabled>
+QList<View> IRdbViewModelInterface<T, View, Db, enabled>::findAll(const IRdbCondition& condition)
 {
     auto query = createQuery(m_dialect.findAllSql(entityInfo(), condition));
     condition.bindParameters(query);
     query.exec();
-    return IRdbUtil::getEntities<Table>(query);
+    return IRdbUtil::getEntities<View>(query);
 }
 
-template<typename T, typename Table, typename Db, bool enabled>
-QVariantList IRdbViewModelInterface<T, Table, Db, enabled>::findColumn(const QString& column)
+template<typename T, typename View, typename Db, bool enabled>
+QVariantList IRdbViewModelInterface<T, View, Db, enabled>::findColumn(const QString& column)
 {
     auto query = createQuery(m_dialect.findColumnSql(entityInfo(), {column}));
     if(!query.exec()){
@@ -162,8 +161,8 @@ QVariantList IRdbViewModelInterface<T, Table, Db, enabled>::findColumn(const QSt
     return IRdbUtil::getVariantList(query);
 }
 
-template<typename T, typename Table, typename Db, bool enabled>
-QVariantList IRdbViewModelInterface<T, Table, Db, enabled>::findColumn(const QString &column, const IRdbCondition &condition)
+template<typename T, typename View, typename Db, bool enabled>
+QVariantList IRdbViewModelInterface<T, View, Db, enabled>::findColumn(const QString &column, const IRdbCondition &condition)
 {
     auto query = createQuery(m_dialect.findColumnSql(entityInfo(), {column}, condition));
     condition.bindParameters(query);
@@ -173,8 +172,8 @@ QVariantList IRdbViewModelInterface<T, Table, Db, enabled>::findColumn(const QSt
     return IRdbUtil::getVariantList(query);
 }
 
-template<typename T, typename Table, typename Db, bool enabled>
-QList<QVariantMap> IRdbViewModelInterface<T, Table, Db, enabled>::findColumns(const QStringList& columns)
+template<typename T, typename View, typename Db, bool enabled>
+QList<QVariantMap> IRdbViewModelInterface<T, View, Db, enabled>::findColumns(const QStringList& columns)
 {
     auto query = createQuery(m_dialect.findColumnSql(entityInfo(), columns));
     if(!query.exec()){
@@ -183,8 +182,8 @@ QList<QVariantMap> IRdbViewModelInterface<T, Table, Db, enabled>::findColumns(co
     return IRdbUtil::getVariantMapList(query);
 }
 
-template<typename T, typename Table, typename Db, bool enabled>
-QList<QVariantMap> IRdbViewModelInterface<T, Table, Db, enabled>::findColumns(const QStringList& columns, const IRdbCondition& condition)
+template<typename T, typename View, typename Db, bool enabled>
+QList<QVariantMap> IRdbViewModelInterface<T, View, Db, enabled>::findColumns(const QStringList& columns, const IRdbCondition& condition)
 {
     auto query = createQuery(m_dialect.findColumnSql(entityInfo(), columns, condition));
     condition.bindParameters(query);
@@ -194,8 +193,8 @@ QList<QVariantMap> IRdbViewModelInterface<T, Table, Db, enabled>::findColumns(co
     return IRdbUtil::getVariantMapList(query);
 }
 
-template<typename T, typename Table, typename Db, bool enabled>
-bool IRdbViewModelInterface<T, Table, Db, enabled>::exist(const IRdbCondition &condition)
+template<typename T, typename View, typename Db, bool enabled>
+bool IRdbViewModelInterface<T, View, Db, enabled>::exist(const IRdbCondition &condition)
 {
     auto query = createQuery(m_dialect.existSql(entityInfo(), condition));
     condition.bindParameters(query);
@@ -209,22 +208,22 @@ bool IRdbViewModelInterface<T, Table, Db, enabled>::exist(const IRdbCondition &c
     return false;
 }
 
-template<typename T, typename Table, typename Db, bool enabled>
-ISqlQuery IRdbViewModelInterface<T, Table, Db, enabled>::createQuery()
+template<typename T, typename View, typename Db, bool enabled>
+ISqlQuery IRdbViewModelInterface<T, View, Db, enabled>::createQuery()
 {
     return m_database.createQuery();
 }
 
-template<typename T, typename Table, typename Db, bool enabled>
-ISqlQuery IRdbViewModelInterface<T, Table, Db, enabled>::createQuery(const QString &sql)
+template<typename T, typename View, typename Db, bool enabled>
+ISqlQuery IRdbViewModelInterface<T, View, Db, enabled>::createQuery(const QString &sql)
 {
     auto query = m_database.createQuery();
     query.prepare(sql);
     return query;
 }
 
-template<typename T, typename Table, typename Db, bool enabled>
-ISqlQuery IRdbViewModelInterface<T, Table, Db, enabled>::createQuery(const QString& sql, const QVariantMap& values)
+template<typename T, typename View, typename Db, bool enabled>
+ISqlQuery IRdbViewModelInterface<T, View, Db, enabled>::createQuery(const QString& sql, const QVariantMap& values)
 {
     auto query = m_database.createQuery();
     query.prepare(sql);
@@ -232,10 +231,10 @@ ISqlQuery IRdbViewModelInterface<T, Table, Db, enabled>::createQuery(const QStri
     return query;
 }
 
-template<typename T, typename Table, typename Db, bool enabled>
-const IRdbEntityInfo &IRdbViewModelInterface<T, Table, Db, enabled>::entityInfo() const
+template<typename T, typename View, typename Db, bool enabled>
+const IRdbEntityInfo &IRdbViewModelInterface<T, View, Db, enabled>::entityInfo() const
 {
-    return Table::staticEntityInfo();
+    return View::staticEntityInfo();
 }
 
 
@@ -256,7 +255,7 @@ void  IRdbViewModelInterface<T, View, Db, enabled>::$task()
 {
     if constexpr (enabled){
         const auto& name = viewInfo().m_entityName;
-        if(IRdbEntityModelWare<View, Db>::m_database.getRdbViews().contains(name)){
+        if(m_database.getRdbViews().contains(name)){
 //            Db::instance().dropView(m_viewInfo);
             return;
         }
@@ -271,7 +270,7 @@ void  IRdbViewModelInterface<T, View, Db, enabled>::$task()
 
 
         this->createQuery().exec(sql);
-        if(IRdbEntityModelWare<View, Db>::m_database.getRdbViews().contains(name)){
+        if(m_database.getRdbViews().contains(name)){
             qDebug().noquote() << IMetaUtil::getTypeName<T>() << "CREATE VIEW: " << name;
         }else{
             qDebug().noquote() << IMetaUtil::getTypeName<T>() << "CREATE VIEW: " << name << "FAILED";
@@ -286,12 +285,12 @@ const IRdbViewInfo &IRdbViewModelInterface<T, View, Db, enabled>::viewInfo()
 }
 
 
-template<typename T, typename Table, typename Db, bool enabled>
-typename IRdbViewModelInterface<T, Table, Db, enabled>::IRdbViewModelInterfaceInitPrivate
-    IRdbViewModelInterface<T, Table, Db, enabled>::m_private;
+template<typename T, typename View, typename Db, bool enabled>
+typename IRdbViewModelInterface<T, View, Db, enabled>::IRdbViewModelInterfaceInitPrivate
+    IRdbViewModelInterface<T, View, Db, enabled>::m_private;
 
-template<typename T, typename Table, typename Db, bool enabled>
-IRdbViewModelInterface<T, Table, Db, enabled>::IRdbViewModelInterfaceInitPrivate::IRdbViewModelInterfaceInitPrivate()
+template<typename T, typename View, typename Db, bool enabled>
+IRdbViewModelInterface<T, View, Db, enabled>::IRdbViewModelInterfaceInitPrivate::IRdbViewModelInterfaceInitPrivate()
 {
     if constexpr (enabled){
         static std::once_flag flag;

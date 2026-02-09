@@ -4,9 +4,10 @@
 
 $PackageWebCoreBegin
 
+template class IBeanInterface<IRdbDataSource>;
+
 IRdbDataSource::IRdbDataSource()
 {
-    qDebug() << "hello world";
 }
 
 IRdbDataSource IRdbDataSource::fromConfig(const std::string & path)

@@ -16,6 +16,7 @@ class IRdbTableInterface // : public IBeanInterface<T, enabled, trait>
     $AsTaskUnit(IRdbTableInterface)
 public:
     IRdbTableInterface() = default;
+    virtual ~IRdbTableInterface() = default;
 
 public:
     void $task();
