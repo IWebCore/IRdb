@@ -10,6 +10,7 @@
     "keywords": ["rdb", "orm", "reflection", "bean", "database"],
     "homepage": "https://github.com/IWebCore/IRdb",
     "changelog":"init project",
+    "autoScan":true,
     "isGlobal": true,
     "publisher": "yuekeyuan"
 }
